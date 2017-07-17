@@ -8,95 +8,31 @@ function load_cwl(cwl_contents_str) {
     return jsyaml.safeLoad(cwl_contents_str);
 }
 
-function normalise_workflow_inputs(object) {
-    if (! Array.isArray(object)) {
-	var result = [];
-        for (var property in object) {
-            if (object.hasOwnProperty(property)) {
-	        const value = object[property];
-		const new_data = { id: property, type: value }
-		result.push(new_data);
-	    }
-	}
-	return result;
-    }
-    else {
-        return object;
-    }
-}
-
-function normalise_step_input_sources(object) {
-    // Make sure the source is always an array
-    if (Array.isArray(object) ) {
-        return object;
-    }
-    else {
-        return [object];
-    }
-}
-
-function normalise_step_inputs(object) {
-    if (! Array.isArray(object)) {
-	var result = [];
-        for (var property in object) {
-            if (object.hasOwnProperty(property)) {
-	        const value = object[property];
-		const new_data = { id: property, source: value}
-		result.push(new_data);
-	    }
-	}
-	return result;
-    }
-    else {
-        return object;
-    }
-}
-
-function map_format_to_array(object) {
-    if (! Array.isArray(object)) {
-	var result = [];
-        for (var property in object) {
-            if (object.hasOwnProperty(property)) {
-	        const value = object[property];
-		value.id = property;
-		result.push(value);
-	    }
-	}
-	return result;
-    }
-    else {
-        return object;
-    }
-}
-
-function process_inputs(cwl_inputs, elements) {
-    const items = normalise_workflow_inputs(cwl_inputs);
-    for (var i = 0; i < items.length; i++) {
-        var input_object = items[i];
+function process_inputs(inputs, elements) {
+    for (var i = 0; i < inputs.length; i++) {
+        var input_object = inputs[i];
         const new_data =
-	    { data:
-	        { id: input_object.id },
-	      classes: 'input'
-	    };
+            {   data: { id: input_object.id },
+                classes: 'input'
+            };
         elements.push(new_data);
     }
 }
 
-function process_outputs(cwl_outputs, elements) {
-    const items = map_format_to_array(cwl_outputs);
-    for (var i = 0; i < items.length; i++) {
-        var output_object = items[i];
+function process_outputs(outputs, elements) {
+    for (var i = 0; i < outputs.length; i++) {
+        var output_object = outputs[i];
         const new_node =
-	    { data:
-	        { id: output_object.id },
-	      classes: 'output'
-	    }
+            { data:
+                { id: output_object.id },
+                classes: 'output'
+            }
         elements.push(new_node);
         const new_edge =
-            { data: 
+            { data:
                 { id: edge_counter,
                   source: get_source(output_object.outputSource),
-                  target: output_object.id 
+                  target: output_object.id
                 }
             };
         edge_counter++;
@@ -109,66 +45,48 @@ function get_source(source_string) {
 }
 
 function process_step_inputs(step_inputs, target_node, elements) {
-    const items = normalise_step_inputs(step_inputs);
-    for (var i = 0; i < items.length; i++) {
-	const step_input_object = items[i];
-	const sources = normalise_step_input_sources(step_input_object.source);
-	for (var j = 0; j < sources.length; j++) { 
+    for (var i = 0; i < step_inputs.length; i++) {
+        const step_input_object = step_inputs[i];
+        const sources = step_input_object.source;
+        for (var j = 0; j < sources.length; j++) {
             var new_edge =
                 { data:
                     { id: edge_counter,
                       source: get_source(sources[j]),
-                      target: target_node 
-                    }
-                };
-            edge_counter++;
-            elements.push(new_edge);
-	}
-    }
-/*
-    for (var property in step_inputs) {
-        if (step_inputs.hasOwnProperty(property)) {
-            const new_edge =
-                { data:
-                    { id: edge_counter,
-                      source: get_source(step_inputs[property]),
-                      target: target_node 
+                      target: target_node
                     }
                 };
             edge_counter++;
             elements.push(new_edge);
         }
     }
-*/
 }
 
-function dump(object) {
-    console.log(JSON.stringify(object, null, 4));
-}
-
-function process_steps(cwl_steps, elements) {
-    const items = map_format_to_array(cwl_steps);
-    for (var i = 0; i < items.length; i++) {
-	var step_object = items[i];
+function process_steps(steps, elements) {
+    for (var i = 0; i < steps.length; i++) {
+        var step_object = steps[i];
         const new_node =
-	    { data:
+            { data:
                 { id: step_object.id },
-	      classes: "step"
-	    }
+                classes: "step"
+            }
         elements.push(new_node);
         process_step_inputs(step_object.in, step_object.id, elements);
     }
-    /*
-    for (var property in cwl_steps) {
-        if (cwl_steps.hasOwnProperty(property)) {
-            const new_node = { data: { id: property }}
-            elements.push(new_node);
-            process_step_inputs(cwl_steps[property].in, property, elements);
-        }
-    }
-    */
 }
 
+function process_cwl(data) {
+    const graph_elements = [];
+    const workflow = load_cwl(data);
+    const normalised_workflow = normalise_workflow(workflow);
+    //dump(normalised_workflow);
+    process_inputs(normalised_workflow.inputs, graph_elements);
+    process_outputs(normalised_workflow.outputs, graph_elements);
+    process_steps(normalised_workflow.steps, graph_elements);
+    return graph_elements;
+}
+
+/*
 function process_cwl(data) {
     const cwl_object = load_cwl(data);
     const graph_elements = [];
@@ -177,6 +95,7 @@ function process_cwl(data) {
     process_steps(cwl_object.steps, graph_elements);
     return graph_elements;
 }
+*/
 
 function render_workflow(cwl_workflow_source_str){
     const graph_elements = process_cwl(cwl_workflow_source_str);
@@ -185,7 +104,7 @@ function render_workflow(cwl_workflow_source_str){
             name: 'dagre',
         },
         style: [
-	/*
+    /*
             {
                 selector: 'node',
                 style: {
@@ -194,41 +113,41 @@ function render_workflow(cwl_workflow_source_str){
                     label: 'data(id)'
                 }
             },
-	 */
+     */
             {
-		selector: ".output",
+    selector: ".output",
                 style: {
                     shape: 'roundrectangle',
                     'background-color': '#99ccff',
                     label: 'data(id)',
-		    'text-valign': 'center',
-		    'text-halign' : 'center',
-		    width : 'label',
-		    'padding': 10,
+        'text-valign': 'center',
+        'text-halign' : 'center',
+        width : 'label',
+        'padding': 10,
                 }
             },
             {
-		selector: ".input",
+    selector: ".input",
                 style: {
                     shape: 'roundrectangle',
                     'background-color': '#cccc99',
                     label: 'data(id)',
-		    'text-valign': 'center',
-		    'text-halign' : 'center',
-		    width : 'label',
-		    'padding': 10,
+        'text-valign': 'center',
+        'text-halign' : 'center',
+        width : 'label',
+        'padding': 10,
                 }
             },
             {
-		selector: ".step",
+    selector: ".step",
                 style: {
                     shape: 'roundrectangle',
                     'background-color': '#ccff66',
                     label: 'data(id)',
-		    'text-valign': 'center',
-		    'text-halign' : 'center',
-		    width : 'label',
-		    'padding': 10,
+        'text-valign': 'center',
+        'text-halign' : 'center',
+        width : 'label',
+        'padding': 10,
                 }
             },
             {
@@ -237,7 +156,7 @@ function render_workflow(cwl_workflow_source_str){
                     'width': 3,
                     'line-color': '#ccc',
                     'target-arrow-color': '#ccc',
-		    'curve-style': 'bezier', // This is needed to make the arrow-heads appear
+        'curve-style': 'bezier', // This is needed to make the arrow-heads appear
                     'target-arrow-shape': 'triangle'
                 }
             }
@@ -253,38 +172,31 @@ function render_example() {
     var example_choice = $('#example_choice').val();
     if (example_choice === "example_1") {
         render_workflow(example_cwl_1);
-    }	
+    }
     else {
         render_workflow(example_cwl_2);
-    }	
+    }
 }
 
 function main(){
     var cwl_workflow_url = "";
     $(document).ready(function () {
-        //$.get('https://raw.githubusercontent.com/NCI-GDC/gdc-dnaseq-cwl/master/workflows/dnaseq/integrity.cwl')
-        //.done(function (data) {
-            //dump(data);
-	    $('#workflow_url_button').click(function () {
-		cwl_workflow_url = $('#workflow_url').val()
-	        console.log(cwl_workflow_url);
-		if (cwl_workflow_url !== "") {
-	            $.get(cwl_workflow_url).done(function (workflow_source) {
-	                console.log(workflow_source);
-	                render_workflow(workflow_source);
-		    })
-		    .fail(function (error) {
-		        alert(error);
-	            });
-		}	
-	    });
+        $('#workflow_url_button').click(function () {
+    cwl_workflow_url = $('#workflow_url').val()
+    if (cwl_workflow_url !== "") {
+                $.get(cwl_workflow_url).done(function (workflow_source) {
+                    //dump(workflow_source);
+                    render_workflow(workflow_source);
+        })
+        .fail(function (error) {
+            alert(error);
+                });
+    }
+        });
             $("#example_choice").change(function () {
                 render_example();
-	    });
-	    render_example();
-            //const graph_elements = process_cwl(data);
-            //const graph_elements = process_cwl(example_cwl_1);
-        //});
+        });
+        render_example();
     });
 }
 

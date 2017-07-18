@@ -8,146 +8,159 @@ function load_cwl(cwl_contents_str) {
     return jsyaml.safeLoad(cwl_contents_str);
 }
 
-function process_inputs(inputs, elements) {
-    for (var i = 0; i < inputs.length; i++) {
-        var input_object = inputs[i];
-        const new_data =
-            {   data: { id: input_object.id },
-                classes: 'input'
-            };
-        elements.push(new_data);
-    }
+function process_inputs(inputs) {
+    return inputs.map(function (input_object) {
+        return {
+            data: { id: input_object.id },
+            classes: 'input'
+        };
+    });
 }
 
-function process_outputs(outputs, elements) {
+function process_outputs(outputs) {
+    const elements = [];
     for (var i = 0; i < outputs.length; i++) {
-        var output_object = outputs[i];
-        const new_node =
-            { data:
-                { id: output_object.id },
+        const output_object = outputs[i];
+        const new_node = {
+                data: { id: output_object.id },
                 classes: 'output'
             }
         elements.push(new_node);
-        const new_edge =
-            { data:
-                { id: edge_counter,
-                  source: get_source(output_object.outputSource),
-                  target: output_object.id
+        const new_edge = {
+                data: {
+                        id: edge_counter,
+                        source: get_source(output_object.outputSource),
+                        target: output_object.id
                 }
             };
         edge_counter++;
         elements.push(new_edge);
     }
+    return elements;
 }
 
 function get_source(source_string) {
     return source_string.split('/')[0];
 }
 
-function process_step_inputs(step_inputs, target_node, elements) {
+function process_step_inputs(step_inputs, target_node) {
+    const elements = [];
     for (var i = 0; i < step_inputs.length; i++) {
         const step_input_object = step_inputs[i];
         const sources = step_input_object.source;
         for (var j = 0; j < sources.length; j++) {
-            var new_edge =
-                { data:
-                    { id: edge_counter,
-                      source: get_source(sources[j]),
-                      target: target_node
+            const new_edge = {
+                    data: {
+                        id: edge_counter,
+                        source: get_source(sources[j]),
+                        target: target_node
                     }
                 };
             edge_counter++;
             elements.push(new_edge);
         }
     }
+    return elements;
 }
 
-function process_steps(steps, elements) {
+function process_steps(steps) {
+    const elements = [];
     for (var i = 0; i < steps.length; i++) {
         var step_object = steps[i];
-        const new_node =
-            { data:
-                { id: step_object.id },
+        const new_node = {
+                data: { id: step_object.id },
                 classes: "step"
             }
         elements.push(new_node);
-        process_step_inputs(step_object.in, step_object.id, elements);
+        elements.push.apply(elements, process_step_inputs(step_object.in, step_object.id));
     }
-}
-
-function process_cwl(data) {
-    const graph_elements = [];
-    const workflow = load_cwl(data);
-    const normalised_workflow = normalise_workflow(workflow);
-    //dump(normalised_workflow);
-    process_inputs(normalised_workflow.inputs, graph_elements);
-    process_outputs(normalised_workflow.outputs, graph_elements);
-    process_steps(normalised_workflow.steps, graph_elements);
-    return graph_elements;
+    return elements;
 }
 
 /*
-function process_cwl(data) {
-    const cwl_object = load_cwl(data);
-    const graph_elements = [];
-    process_inputs(cwl_object.inputs, graph_elements);
-    process_outputs(cwl_object.outputs, graph_elements);
-    process_steps(cwl_object.steps, graph_elements);
-    return graph_elements;
-}
+    Convert a Workflow into a Cytoscape graph_elements
+
+    Worflow properties are below. We show only the normalised form.
+
+    inputs:     array<InputParameter> (normalised)
+
+    outputs:    array<WorkflowOutputParameter> (normalised)
+
+    class:      string
+
+    steps:      array<WorkflowStep>	(normalised)
+
+    id:         string
+
+    requirements:   array<InlineJavascriptRequirement | SchemaDefRequirement |
+                    DockerRequirement | SoftwareRequirement |
+                    InitialWorkDirRequirement | EnvVarRequirement |
+                    ShellCommandRequirement | ResourceRequirement |
+                    SubworkflowFeatureRequirement |
+                    ScatterFeatureRequirement |
+                    MultipleInputFeatureRequirement |
+                    StepInputExpressionRequirement>
+
+    hints:          array<Any>
+
+    label:          string
+
+    doc:            string
+
+    cwlVersion:     CWLVersion
 */
 
-function render_workflow(cwl_workflow_source_str){
-    const graph_elements = process_cwl(cwl_workflow_source_str);
-    var cy = cytoscape({
+function workflow_to_graph(data) {
+    const workflow = load_cwl(data);
+    const normalised_workflow = normalise_workflow(workflow);
+    dump(normalised_workflow);
+    const input_elements = process_inputs(normalised_workflow.inputs);
+    const output_elements = process_outputs(normalised_workflow.outputs);
+    const step_elements = process_steps(normalised_workflow.steps);
+    return input_elements.concat(output_elements, step_elements);
+}
+
+function cytoscape_settings (container, graph_elements) {
+    return {
         layout: {
             name: 'dagre',
         },
+
         style: [
-    /*
             {
-                selector: 'node',
-                style: {
-                    shape: 'roundrectangle',
-                    'background-color': '#cccc99',
-                    label: 'data(id)'
-                }
-            },
-     */
-            {
-    selector: ".output",
+                selector: ".output",
                 style: {
                     shape: 'roundrectangle',
                     'background-color': '#99ccff',
                     label: 'data(id)',
-        'text-valign': 'center',
-        'text-halign' : 'center',
-        width : 'label',
-        'padding': 10,
+                    'text-valign': 'center',
+                    'text-halign' : 'center',
+                    width : 'label',
+                    'padding': 10,
                 }
             },
             {
-    selector: ".input",
+                selector: ".input",
                 style: {
                     shape: 'roundrectangle',
                     'background-color': '#cccc99',
                     label: 'data(id)',
-        'text-valign': 'center',
-        'text-halign' : 'center',
-        width : 'label',
-        'padding': 10,
+                    'text-valign': 'center',
+                    'text-halign' : 'center',
+                    width : 'label',
+                    'padding': 10,
                 }
             },
             {
-    selector: ".step",
+                selector: ".step",
                 style: {
                     shape: 'roundrectangle',
                     'background-color': '#ccff66',
                     label: 'data(id)',
-        'text-valign': 'center',
-        'text-halign' : 'center',
-        width : 'label',
-        'padding': 10,
+                    'text-valign': 'center',
+                    'text-halign' : 'center',
+                    width : 'label',
+                    'padding': 10,
                 }
             },
             {
@@ -156,16 +169,37 @@ function render_workflow(cwl_workflow_source_str){
                     'width': 3,
                     'line-color': '#ccc',
                     'target-arrow-color': '#ccc',
-        'curve-style': 'bezier', // This is needed to make the arrow-heads appear
+                    'curve-style': 'bezier', // This is needed to make the arrow-heads appear
                     'target-arrow-shape': 'triangle'
                 }
             }
         ],
-        container: document.getElementById('cy'),
-        elements: graph_elements
-    });
+        container: container,
+        elements: graph_elements,
+    };
+}
 
+function render_workflow(cwl_workflow_source_str) {
+    const graph_elements = workflow_to_graph(cwl_workflow_source_str);
+    const container = document.getElementById('cy');
+    const cy = cytoscape(cytoscape_settings(container, graph_elements));
     cy.resize();
+}
+
+function workflow_url_action () {
+    var cwl_workflow_url = "";
+    $('#workflow_url_button').click(function () {
+        cwl_workflow_url = $('#workflow_url').val()
+        if (cwl_workflow_url !== "") {
+            $.get(cwl_workflow_url).done(function (workflow_source) {
+                //dump(workflow_source);
+                render_workflow(workflow_source);
+            })
+            .fail(function (error) {
+                alert(error);
+            });
+        }
+    });
 }
 
 function render_example() {
@@ -178,24 +212,22 @@ function render_example() {
     }
 }
 
-function main(){
-    var cwl_workflow_url = "";
+function workflow_example_choice_action () {
+    $("#example_choice").change(function () {
+        render_example();
+    });
+}
+
+/*
+    Entry point for rendering the page
+*/
+function main() {
     $(document).ready(function () {
-        $('#workflow_url_button').click(function () {
-    cwl_workflow_url = $('#workflow_url').val()
-    if (cwl_workflow_url !== "") {
-                $.get(cwl_workflow_url).done(function (workflow_source) {
-                    //dump(workflow_source);
-                    render_workflow(workflow_source);
-        })
-        .fail(function (error) {
-            alert(error);
-                });
-    }
-        });
-            $("#example_choice").change(function () {
-                render_example();
-        });
+        // Action to carry out if a URL is entered and drawn
+        workflow_url_action();
+        // Action to carry out if user selects example from menu
+        workflow_example_choice_action();
+        // By default render an example
         render_example();
     });
 }

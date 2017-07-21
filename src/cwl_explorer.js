@@ -63,6 +63,44 @@ function process_step_inputs(step_inputs, target_node) {
     return elements;
 }
 
+/*
+    Process WorkflowSteps
+
+    We only consider normalised steps here.
+
+    Each normalised WorflowStep has:
+
+    Required properties:
+
+    id:     string
+
+    in:     array<WorkflowStepInput>
+
+    out:    array<string | WorkflowStepOutput>
+
+    run:	string | CommandLineTool | ExpressionTool | Workflow
+
+    Optional properties:
+
+    requirements:   array<InlineJavascriptRequirement | SchemaDefRequirement |
+                    DockerRequirement | SoftwareRequirement |
+                    InitialWorkDirRequirement | EnvVarRequirement |
+                    ShellCommandRequirement | ResourceRequirement |
+                    SubworkflowFeatureRequirement | ScatterFeatureRequirement |
+                    MultipleInputFeatureRequirement |
+                    StepInputExpressionRequirement>
+
+    hints:  array<Any>
+
+    label:  string
+
+    doc:    string	False
+
+    scatter:    string | array<string>
+
+    scatterMethod:  ScatterMethod
+*/
+
 function process_steps(steps) {
     const elements = [];
     for (var i = 0; i < steps.length; i++) {

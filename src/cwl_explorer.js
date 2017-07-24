@@ -2,6 +2,7 @@
 
 document.addEventListener("DOMContentLoaded", function() { main(); })
 
+// XXX do we really need this?
 var edge_counter = 0;
 
 function load_cwl(cwl_contents_str) {
@@ -15,6 +16,10 @@ function process_inputs(inputs) {
             classes: 'input'
         };
     });
+}
+
+function get_source(source_string) {
+    return source_string.split('/')[0];
 }
 
 function process_outputs(outputs) {
@@ -39,9 +44,31 @@ function process_outputs(outputs) {
     return elements;
 }
 
-function get_source(source_string) {
-    return source_string.split('/')[0];
-}
+/*
+    WorkflowStepInput
+
+    We only consider normalised WorkflowStepInputs here.
+
+    Each normalised WorflowStepInput has:
+
+    Required properties:
+
+    id:         string
+
+    Optional properties:
+
+    source:     array<string>
+
+    linkMerge:  LinkMergeMethod
+
+    default:    Any
+
+    valueFrom:	string | Expression
+
+    TODO:
+        - handle defaults
+
+*/
 
 function process_step_inputs(step_inputs, target_node) {
     const elements = [];
@@ -99,6 +126,10 @@ function process_step_inputs(step_inputs, target_node) {
     scatter:    string | array<string>
 
     scatterMethod:  ScatterMethod
+
+    TODO:
+        - Do something with the outputs
+        - Add metadata to the node, where available
 */
 
 function process_steps(steps) {

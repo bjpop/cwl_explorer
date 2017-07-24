@@ -22,6 +22,42 @@ function get_source(source_string) {
     return source_string.split('/')[0];
 }
 
+/*
+    WorkflowOutputParameter
+
+    We only consider normalised WorkflowOutputParameters here.
+
+    Each normalised WorkflowOutputParameter has:
+
+    Required properties:
+
+    id:             string
+
+    Optional properties:
+
+    label:          string
+
+    secondaryFiles:	string | Expression | array<string | Expression>
+
+    streamable:     boolean
+
+    doc:            string | array<string>
+
+    outputBinding:	CommandOutputBinding
+
+    format:	        string | Expression	False
+
+    outputSource:	string | array<string>
+
+    linkMerge:      LinkMergeMethod
+
+    type:           CWLType | OutputRecordSchema | OutputEnumSchema |
+                    OutputArraySchema | string |
+                    array<CWLType | OutputRecordSchema | OutputEnumSchema |
+                            OutputArraySchema | string>
+
+*/
+
 function process_outputs(outputs) {
     const elements = [];
     for (var i = 0; i < outputs.length; i++) {

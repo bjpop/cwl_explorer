@@ -5,9 +5,38 @@ document.addEventListener("DOMContentLoaded", function() { main(); })
 // XXX do we really need this?
 var edge_counter = 0;
 
-function load_cwl(cwl_contents_str) {
-    return jsyaml.safeLoad(cwl_contents_str);
-}
+/*
+    InputParameter
+
+    We only consider normalised InputParameters here.
+
+    Each normalised InputParameter has:
+
+    Required properties:
+
+    id:             string
+
+    Optional properties:
+
+    label:          string
+
+    secondaryFiles:	string | Expression | array<string | Expression>
+
+    streamable:     boolean
+
+    doc:            string | array<string>
+
+    format:         string | array<string> | Expression
+
+    inputBinding:   CommandLineBinding
+
+    default:        Any
+
+    type:           CWLType | InputRecordSchema | InputEnumSchema |
+                    InputArraySchema | string |
+                    array<CWLType | InputRecordSchema | InputEnumSchema |
+                            InputArraySchema | string>
+*/
 
 function process_inputs(inputs) {
     return inputs.map(function (input_object) {
@@ -16,10 +45,6 @@ function process_inputs(inputs) {
             classes: 'input'
         };
     });
-}
-
-function get_source(source_string) {
-    return source_string.split('/')[0];
 }
 
 /*
@@ -225,6 +250,15 @@ function workflow_to_graph(data) {
     return input_elements.concat(output_elements, step_elements);
 }
 
+/* Convert a YAML file (as a string) into a javascript object */
+function load_cwl(cwl_contents_str) {
+    return jsyaml.safeLoad(cwl_contents_str);
+}
+
+function get_source(source_string) {
+    return source_string.split('/')[0];
+}
+
 function cytoscape_settings (container, graph_elements) {
     return {
         layout: {
@@ -336,6 +370,8 @@ function main() {
         render_example();
     });
 }
+
+/* Some example CWL files as strings for testing and demonstration */
 
 const example_cwl_1 = "cwlVersion: v1.0\nclass: Workflow\ninputs:\n  inp: File\n  ex: string\n\noutputs:\n  classout:\n    type: File\n    outputSource: compile/classfile\n\nsteps:\n  untar:\n    run: tar-param.cwl\n    in:\n      tarfile: inp\n      extractfile: ex\n    out: [example_out]\n\n  compile:\n    run: arguments.cwl\n    in:\n      src: untar/example_out\n    out: [classfile]\n";
 

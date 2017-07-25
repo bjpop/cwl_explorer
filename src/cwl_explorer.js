@@ -318,28 +318,34 @@ function cytoscape_settings (container, graph_elements) {
     };
 }
 
+function node_qtip_text(node) {
+    return "node";
+}
+
+function add_qtips_to_nodes(cy) {
+    cy.nodes().forEach(function(ele) {
+        ele.qtip({
+             content: {
+                 text: node_qtip_text(ele),
+                 title: ele.data('id')
+             },
+             style: {
+                 classes: 'qtip-bootstrap'
+             },
+             position: {
+                 my: 'bottom center',
+                 at: 'top center',
+                 target: ele
+             }
+        });
+    });
+}
+
 function render_workflow(cwl_workflow_source_str) {
     const graph_elements = workflow_to_graph(cwl_workflow_source_str);
     const container = document.getElementById('cy');
     const cy = cytoscape(cytoscape_settings(container, graph_elements));
-    cy.nodes().forEach(function(ele) {
-        ele.qtip({
-          content: {
-            //text: qtipText(ele),
-            text: 'hello',
-            //title: ele.data('fullName')
-            title: 'Title'
-          },
-          style: {
-            classes: 'qtip-bootstrap'
-          },
-          position: {
-            my: 'bottom center',
-            at: 'top center',
-            target: ele
-          }
-        });
-      });
+    add_qtips_to_nodes(cy);
     cy.resize();
 }
 

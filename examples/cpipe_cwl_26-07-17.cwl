@@ -24,8 +24,8 @@ inputs:
         doc:
     reference_assembly:
         type: File
-    label: ref_assembly_buildhg19
-    format: data_2340 # genome build identifier
+        label: ref_assembly_buildhg19
+        format: data_2340 # genome build identifier
         secondaryFiles: [".fai", "^.dict"]
         doc:
     bam:

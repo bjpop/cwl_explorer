@@ -5,6 +5,29 @@ document.addEventListener("DOMContentLoaded", function() { main(); })
 // XXX do we really need this?
 var edge_counter = 0;
 
+function node_metadata(node) {
+    const result = {};
+    for (var property in node) {
+        if ((property !== 'id') && (node.hasOwnProperty(property))) {
+            result[property] = node[property];
+        }
+    }
+    return result;
+}
+
+
+function input_metadata(node) {
+    const properties = ["label", "secondaryFiles", "streamable", "doc", "format", "inputBinding", "default", "type"];
+    const result = {};
+    for (var i = 0; i < properties.length; i++) {
+        const property = properties[i];
+        if (node.hasOwnProperty(property)) {
+            result[property] = node[property];
+        }
+    }
+    return result;
+}
+
 /*
     InputParameter
 
@@ -43,7 +66,9 @@ function process_inputs(inputs) {
         return {
             data: {
                 id: input_object.id,
-                cy_class: 'input'
+                //Metadata for visualisation
+                cy_class: 'input',
+                metadata: input_metadata(input_object),
             },
             classes: 'input'
         };
@@ -93,18 +118,24 @@ function process_outputs(outputs) {
         const new_node = {
                 data: {
                     id: output_object.id,
-                    cy_class: 'output'
+                    //Metadata for visualisation
+                    cy_class: 'output',
+                    metadata: node_metadata(output_object),
                 },
                 classes: 'output'
             }
         elements.push(new_node);
         const new_edge = {
                 data: {
-                        id: edge_counter,
-                        source: get_source(output_object.outputSource),
-                        target: output_object.id,
-                        cy_class: 'edge'
-                }
+                    id: edge_counter,
+                    source: get_source(output_object.outputSource),
+                    target: output_object.id,
+                    // Metadata for visualisation
+                    cy_class: 'edge',
+                    metadata: {
+                        foo: 'bar'
+                    },
+                },
             };
         edge_counter++;
         elements.push(new_edge);
@@ -149,14 +180,30 @@ function process_step_inputs(step_inputs, target_node) {
                         id: edge_counter,
                         source: get_source(sources[j]),
                         target: target_node,
-                        cy_class: 'edge'
-                    }
+                        // Metadata for visualisation
+                        cy_class: 'edge',
+                        metadata: {
+                            foo: 'bar'
+                        },
+                    },
                 };
             edge_counter++;
             elements.push(new_edge);
         }
     }
     return elements;
+}
+
+function step_metadata(node) {
+    const properties = ["run", "requirements", "hints", "label", "doc"];
+    const result = {};
+    for (var i = 0; i < properties.length; i++) {
+        const property = properties[i];
+        if (node.hasOwnProperty(property)) {
+            result[property] = node[property];
+        }
+    }
+    return result;
 }
 
 /*
@@ -208,7 +255,9 @@ function process_steps(steps) {
         const new_node = {
                 data: {
                     id: step_object.id,
-                    cy_class: 'step'
+                    // Metadata for visualisation
+                    cy_class: 'step',
+                    metadata: step_metadata(step_object),
                 },
                 classes: "step"
             }
@@ -330,7 +379,19 @@ function cytoscape_settings (container, graph_elements) {
 }
 
 function node_qtip_text(node) {
-    return node.data('id');
+    const rows = [];
+    const identity = "<tr><td>identity</td><td>" + node.data('id') + "</td></tr>";
+    const metadata = node.data('metadata');
+    rows.push(identity);
+    // Construct an qtip string for each metadata field in the element
+    for (var property in metadata) {
+        if (metadata.hasOwnProperty(property)) {
+            const new_row = "<tr><td>" + property + "</td><td>" + metadata[property] + "</td></tr>";
+            rows.push(new_row);
+        }
+    }
+    // XXX fix styling of the qtip table
+    return '<table class=\"cwl_explorer_qtip_table\">' + rows.join('') + "</table>";
 }
 
 function add_qtips_to_nodes(cy) {
@@ -338,7 +399,7 @@ function add_qtips_to_nodes(cy) {
         ele.qtip({
              content: {
                  text: node_qtip_text(ele),
-                 title: ele.data('cy_class')
+                 title: 'workflow ' + ele.data('cy_class')
              },
              style: {
                  classes: 'qtip-bootstrap'
@@ -352,11 +413,19 @@ function add_qtips_to_nodes(cy) {
     });
 }
 
-function edge_qtip_text(edge) {
-    const source = edge.data('source');
-    const target = edge.data('target');
-    const html = 'source: ' + source + '<br>' + 'target: ' + target
-    return html
+function edge_qtip_text(node) {
+    const text_lines = [];
+    const identity = "identity: " + node.data('id');
+    const metadata = node.data('metadata');
+    text_lines.push(identity);
+    // Construct an qtip string for each metadata field in the element
+    for (var property in metadata) {
+        if (metadata.hasOwnProperty(property)) {
+            const new_line = property + ": " + metadata[property];
+            text_lines.push(new_line);
+        }
+    }
+    return text_lines.join(' <br> ');
 }
 
 function add_qtips_to_edges(cy) {
@@ -364,7 +433,7 @@ function add_qtips_to_edges(cy) {
         ele.qtip({
              content: {
                  text: edge_qtip_text(ele),
-                 title: 'edge'
+                 title: 'workflow edge'
              },
              style: {
                  classes: 'qtip-bootstrap'
@@ -393,7 +462,7 @@ function workflow_url_action () {
         cwl_workflow_url = $('#workflow_url').val()
         if (cwl_workflow_url !== "") {
             $.get(cwl_workflow_url).done(function (workflow_source) {
-                dump(workflow_source);
+                //dump(workflow_source);
                 render_workflow(workflow_source);
             })
             .fail(function (error) {

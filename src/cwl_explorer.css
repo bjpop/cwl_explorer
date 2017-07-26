@@ -33,3 +33,9 @@ textarea {
   height: 100%;
   position: absolute;
 }
+
+table.cwl_explorer_qtip_table {
+    border-collapse: separate;
+    border-spacing: 10px;
+    text-align: left;
+}

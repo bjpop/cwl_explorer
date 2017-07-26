@@ -41,7 +41,10 @@ var edge_counter = 0;
 function process_inputs(inputs) {
     return inputs.map(function (input_object) {
         return {
-            data: { id: input_object.id },
+            data: {
+                id: input_object.id,
+                cy_class: 'input'
+            },
             classes: 'input'
         };
     });
@@ -88,7 +91,10 @@ function process_outputs(outputs) {
     for (var i = 0; i < outputs.length; i++) {
         const output_object = outputs[i];
         const new_node = {
-                data: { id: output_object.id },
+                data: {
+                    id: output_object.id,
+                    cy_class: 'output'
+                },
                 classes: 'output'
             }
         elements.push(new_node);
@@ -96,7 +102,8 @@ function process_outputs(outputs) {
                 data: {
                         id: edge_counter,
                         source: get_source(output_object.outputSource),
-                        target: output_object.id
+                        target: output_object.id,
+                        cy_class: 'edge'
                 }
             };
         edge_counter++;
@@ -141,7 +148,8 @@ function process_step_inputs(step_inputs, target_node) {
                     data: {
                         id: edge_counter,
                         source: get_source(sources[j]),
-                        target: target_node
+                        target: target_node,
+                        cy_class: 'edge'
                     }
                 };
             edge_counter++;
@@ -198,7 +206,10 @@ function process_steps(steps) {
     for (var i = 0; i < steps.length; i++) {
         var step_object = steps[i];
         const new_node = {
-                data: { id: step_object.id },
+                data: {
+                    id: step_object.id,
+                    cy_class: 'step'
+                },
                 classes: "step"
             }
         elements.push(new_node);
@@ -319,7 +330,7 @@ function cytoscape_settings (container, graph_elements) {
 }
 
 function node_qtip_text(node) {
-    return "node";
+    return node.data('id');
 }
 
 function add_qtips_to_nodes(cy) {
@@ -327,7 +338,33 @@ function add_qtips_to_nodes(cy) {
         ele.qtip({
              content: {
                  text: node_qtip_text(ele),
-                 title: ele.data('id')
+                 title: ele.data('cy_class')
+             },
+             style: {
+                 classes: 'qtip-bootstrap'
+             },
+             position: {
+                 my: 'bottom center',
+                 at: 'top center',
+                 target: ele
+             }
+        });
+    });
+}
+
+function edge_qtip_text(edge) {
+    const source = edge.data('source');
+    const target = edge.data('target');
+    const html = 'source: ' + source + '<br>' + 'target: ' + target
+    return html
+}
+
+function add_qtips_to_edges(cy) {
+    cy.edges().forEach(function(ele) {
+        ele.qtip({
+             content: {
+                 text: edge_qtip_text(ele),
+                 title: 'edge'
              },
              style: {
                  classes: 'qtip-bootstrap'
@@ -346,6 +383,7 @@ function render_workflow(cwl_workflow_source_str) {
     const container = document.getElementById('cy');
     const cy = cytoscape(cytoscape_settings(container, graph_elements));
     add_qtips_to_nodes(cy);
+    add_qtips_to_edges(cy);
     cy.resize();
 }
 

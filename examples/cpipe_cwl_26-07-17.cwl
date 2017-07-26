@@ -28,19 +28,6 @@ inputs:
         format: data_2340 # genome build identifier
         secondaryFiles: [".fai", "^.dict"]
         doc:
-    bam:
-        type: File
-        format: edam:format_2572  # bam
-        secondaryFiles: [^.bai]
-        doc:
-    vcf:
-        type: File
-        format: edam:format_3016  # vcf
-        doc:
-    interval_list:
-        type: File
-        format: edam:format_3475  # tsv
-        doc:
     target_sites:
         type: File
         format: edam:format_3003  # bed
@@ -58,6 +45,10 @@ outputs:
         type: File
         outputSource: read_quality/reverse_report_html
         doc:
+    dedup_metrics:
+        type: File
+        outputSource: mark_duplicates/dedup_metrics
+        doc:
     table:
         type: File
         outputSource: transcript_filter/transcript_filter_table
@@ -73,8 +64,8 @@ steps:
         label_metadata: https://bio.tools/tool/BWA/version/none ## my own addition. This would normally be included in tools class
         doc: Initial and cursory check for common issues arising as part of the sequencing process related to read quality. Separate reports generated for each lane x read.
         in:
-            forward_reads: forward_reads
-            reverse_reads: reverse_reads
+            forward_reads: [forward_reads]
+            reverse_reads: [reverse_reads]
         out:
            [forward_report_html, reverse_report_html]
     align_to_ref:
@@ -112,7 +103,7 @@ steps:
         in:
             bam: genomic_coord_sort/sorted_bam
         out: 
-            [deduped_bam]
+            [deduped_bam, dedup_metrics]
     realign_intervals:
         run: realign_intervals.cwl
         label: "gatk-RealignerTargetCreator version 3.6"

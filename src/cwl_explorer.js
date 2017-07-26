@@ -2,22 +2,10 @@
 
 document.addEventListener("DOMContentLoaded", function() { main(); })
 
-// XXX do we really need this?
-var edge_counter = 0;
-
-function node_metadata(node) {
-    const result = {};
-    for (var property in node) {
-        if ((property !== 'id') && (node.hasOwnProperty(property))) {
-            result[property] = node[property];
-        }
-    }
-    return result;
-}
-
 
 function input_metadata(node) {
-    const properties = ["label", "secondaryFiles", "streamable", "doc", "format", "inputBinding", "default", "type"];
+    const properties = ["label", "secondaryFiles", "streamable",
+	                "doc", "format", "inputBinding", "default", "type"];
     const result = {};
     for (var i = 0; i < properties.length; i++) {
         const property = properties[i];
@@ -66,13 +54,25 @@ function process_inputs(inputs) {
         return {
             data: {
                 id: input_object.id,
-                //Metadata for visualisation
                 cy_class: 'input',
+                //Metadata for visualisation
                 metadata: input_metadata(input_object),
             },
             classes: 'input'
         };
     });
+}
+
+function output_metadata(node) {
+    const properties = ["label", "secondaryFiles", "streamable", "doc", "format", "outputBinding", "linkMerge", "type"];
+    const result = {};
+    for (var i = 0; i < properties.length; i++) {
+        const property = properties[i];
+        if (node.hasOwnProperty(property)) {
+            result[property] = node[property];
+        }
+    }
+    return result;
 }
 
 /*
@@ -118,26 +118,25 @@ function process_outputs(outputs) {
         const new_node = {
                 data: {
                     id: output_object.id,
-                    //Metadata for visualisation
                     cy_class: 'output',
-                    metadata: node_metadata(output_object),
+                    // Metadata for visualisation
+                    metadata: output_metadata(output_object),
                 },
                 classes: 'output'
             }
         elements.push(new_node);
         const new_edge = {
                 data: {
-                    id: edge_counter,
                     source: get_source(output_object.outputSource),
                     target: output_object.id,
-                    // Metadata for visualisation
                     cy_class: 'edge',
+                    // Metadata for visualisation
                     metadata: {
-                        foo: 'bar'
+                        source: output_object.outputSource,
+			target: output_object.id
                     },
                 },
             };
-        edge_counter++;
         elements.push(new_edge);
     }
     return elements;
@@ -177,17 +176,16 @@ function process_step_inputs(step_inputs, target_node) {
         for (var j = 0; j < sources.length; j++) {
             const new_edge = {
                     data: {
-                        id: edge_counter,
                         source: get_source(sources[j]),
                         target: target_node,
                         // Metadata for visualisation
                         cy_class: 'edge',
                         metadata: {
-                            foo: 'bar'
+                            source: sources[j],
+			    target: target_node + '/' + step_input_object.id,
                         },
                     },
                 };
-            edge_counter++;
             elements.push(new_edge);
         }
     }
@@ -414,18 +412,17 @@ function add_qtips_to_nodes(cy) {
 }
 
 function edge_qtip_text(node) {
-    const text_lines = [];
-    const identity = "identity: " + node.data('id');
+    const rows = [];
     const metadata = node.data('metadata');
-    text_lines.push(identity);
     // Construct an qtip string for each metadata field in the element
     for (var property in metadata) {
         if (metadata.hasOwnProperty(property)) {
-            const new_line = property + ": " + metadata[property];
-            text_lines.push(new_line);
+            const new_row = "<tr><td>" + property + "</td><td>" + metadata[property] + "</td></tr>";
+            rows.push(new_row);
         }
     }
-    return text_lines.join(' <br> ');
+    // XXX fix styling of the qtip table
+    return '<table class=\"cwl_explorer_qtip_table\">' + rows.join('') + "</table>";
 }
 
 function add_qtips_to_edges(cy) {

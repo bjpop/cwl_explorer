@@ -1,7 +1,7 @@
 cwlVersion: v1.0
 class: Workflow
 label: "Detect Variants workflow"
-doc: WES pipeline with workflow managed by Bpipe. Auditing and logs generated and managed by Bpipe.
+doc: WES pipeline with workflow managed by Bpipe. Auditing and logs generated and managed by Bpipe. Testing this works.
 requirements:
     - class: SubworkflowFeatureRequirement
 inputs:

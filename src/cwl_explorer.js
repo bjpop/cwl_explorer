@@ -60,7 +60,9 @@ function process_inputs(parent_id, inputs) {
                 //Metadata for visualisation
                 metadata: input_metadata(input_object),
             },
-            classes: 'input'
+            classes: 'input',
+            group: 'nodes',
+           
         };
     });
 }
@@ -131,7 +133,8 @@ function process_outputs(parent_id, input_ids, outputs) {
                     // Metadata for visualisation
                     metadata: output_metadata(output_object),
                 },
-                classes: 'output'
+                classes: 'output',
+                group: 'nodes',
             }
         elements.push(new_node);
         const new_edge = {
@@ -146,6 +149,7 @@ function process_outputs(parent_id, input_ids, outputs) {
 			target: output_object.id
                     },
                 },
+                group: "edges"
             };
         elements.push(new_edge);
     }
@@ -195,6 +199,7 @@ function process_step_inputs(input_ids, step_inputs, target_node) {
 			    target: target_node + '/' + step_input_object.id,
                         },
                     },
+                    group: "edges"
                 };
             elements.push(new_edge);
         }
@@ -281,7 +286,8 @@ function process_steps(components, parent_id, input_ids, steps) {
                     cy_class: 'step',
                     metadata: step_metadata(step_object),
                 },
-                classes: "step"
+                classes: "step",
+                group: "nodes",
             }
         elements.push(new_node);
         elements.push.apply(elements, process_step_inputs(input_ids, step_object.in, step_object.id));
@@ -421,7 +427,20 @@ function cytoscape_settings (container, graph_elements) {
                     'curve-style': 'bezier', // This is needed to make the arrow-heads appear
                     'target-arrow-shape': 'triangle'
                 }
-            }
+            },
+            {
+                selector: ':parent',
+                style: {
+                    'background-opacity': 0.333
+                }
+            },
+            {
+                selector: "node.cy-expand-collapse-collapsed-node",
+                style: {
+                    "background-color": '#ccff66',
+                    "shape": "rectangle"
+                }
+            },
         ],
         container: container,
         elements: graph_elements,
@@ -496,6 +515,22 @@ function add_qtips_to_edges(cy) {
     });
 }
 
+function add_expand_collapse(cy) {
+    var api = cy.expandCollapse({
+        layoutBy: {
+            name: "dagre",
+            //animate: true,
+            //randomize: false, 
+            fit: true,
+            rankDir: 'TB'
+        },
+        //fisheye: false,
+        animate: false,
+        undoable: false
+   });
+   api.collapseAll();
+}
+
 function render_workflow() {
     const components = get_components();
     const main_workflow = components['#main'];
@@ -504,6 +539,7 @@ function render_workflow() {
     const cy = cytoscape(cytoscape_settings(container, graph_elements));
     add_qtips_to_nodes(cy);
     add_qtips_to_edges(cy);
+    add_expand_collapse(cy);
     cy.resize();
 }
 

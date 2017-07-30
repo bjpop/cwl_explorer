@@ -49,10 +49,11 @@ function input_metadata(node) {
                             InputArraySchema | string>
 */
 
-function process_inputs(inputs) {
+function process_inputs(parent_id, inputs) {
     return inputs.map(function (input_object) {
         return {
             data: {
+                parent: parent_id,
                 id: input_object.id,
                 render_id: render_id(input_object.id),
                 cy_class: 'input',
@@ -117,12 +118,13 @@ function output_metadata(node) {
 
 */
 
-function process_outputs(input_ids, outputs) {
+function process_outputs(parent_id, input_ids, outputs) {
     const elements = [];
     for (var i = 0; i < outputs.length; i++) {
         const output_object = outputs[i];
         const new_node = {
                 data: {
+                    parent: parent_id,
                     id: output_object.id,
                     render_id: render_id(output_object.id),
                     cy_class: 'output',
@@ -134,6 +136,7 @@ function process_outputs(input_ids, outputs) {
         elements.push(new_node);
         const new_edge = {
                 data: {
+                    parent: parent_id, // Not sure if this is needed for edges
                     source: get_source(input_ids, output_object.outputSource),
                     target: output_object.id,
                     cy_class: 'edge',
@@ -211,6 +214,18 @@ function step_metadata(node) {
     return result;
 }
 
+function process_step_run(components, step_object) {
+    const run_identity = step_object.run;
+    if (components.hasOwnProperty(run_identity)) {
+        const component = components[run_identity];
+        const component_class = component.class;
+        if (component_class === "Workflow") {
+            return workflow_to_graph(components, step_object.id, component);
+        }
+    }
+    return [];
+}
+
 /*
     Process WorkflowSteps
 
@@ -253,12 +268,13 @@ function step_metadata(node) {
         - Add metadata to the node, where available
 */
 
-function process_steps(input_ids, steps) {
+function process_steps(components, parent_id, input_ids, steps) {
     const elements = [];
     for (var i = 0; i < steps.length; i++) {
         var step_object = steps[i];
         const new_node = {
                 data: {
+                    parent: parent_id,
                     id: step_object.id,
                     render_id: render_id(step_object.id),
                     // Metadata for visualisation
@@ -269,6 +285,7 @@ function process_steps(input_ids, steps) {
             }
         elements.push(new_node);
         elements.push.apply(elements, process_step_inputs(input_ids, step_object.in, step_object.id));
+        elements.push.apply(elements, process_step_run(components, step_object));
     }
     return elements;
 }
@@ -306,12 +323,12 @@ function process_steps(input_ids, steps) {
     cwlVersion:     CWLVersion
 */
 
-function workflow_to_graph(workflow) {
+function workflow_to_graph(components, parent_id, workflow) {
     const normalised_workflow = normalise_workflow(workflow);
-    const input_elements = process_inputs(normalised_workflow.inputs);
+    const input_elements = process_inputs(parent_id, normalised_workflow.inputs);
     const input_ids = get_input_ids(normalised_workflow.inputs);
-    const output_elements = process_outputs(input_ids, normalised_workflow.outputs);
-    const step_elements = process_steps(input_ids, normalised_workflow.steps);
+    const output_elements = process_outputs(parent_id, input_ids, normalised_workflow.outputs);
+    const step_elements = process_steps(components, parent_id, input_ids, normalised_workflow.steps);
     return input_elements.concat(output_elements, step_elements);
 }
 
@@ -482,7 +499,7 @@ function add_qtips_to_edges(cy) {
 function render_workflow() {
     const components = get_components();
     const main_workflow = components['#main'];
-    const graph_elements = workflow_to_graph(main_workflow);
+    const graph_elements = workflow_to_graph(components, null, main_workflow);
     const container = document.getElementById('cy');
     const cy = cytoscape(cytoscape_settings(container, graph_elements));
     add_qtips_to_nodes(cy);

@@ -431,7 +431,8 @@ function cytoscape_settings (container, graph_elements) {
             {
                 selector: ':parent',
                 style: {
-                    'background-opacity': 0.333
+                    'background-opacity': 0.333,
+                    'text-valign': 'top',
                 }
             },
             {

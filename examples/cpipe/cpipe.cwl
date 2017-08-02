@@ -95,16 +95,16 @@ steps:
         in:
             aligned_merged_bam: read_alignment/aligned_merged_bam
             target_sites: [target_sites]
-            known_snp_sites: [known_snp_sites]
-            known_indel_sites: [known_indel_sites]
+            known_snp_sites: [annotations_snps]
+            known_indel_sites: [annotations_indels]
             reference_assembly: [reference_assembly]
         out:
-            [recalibrated_bam]
+            [recalibrated_bam, dedup_metrics]
     variant_calling:
         run: variant_calling.cwl
         in:
             recalibrated_bam: post_alignment_processing/recalibrated_bam
-            known_snp_sites: [known_snp_sites]
+            known_snp_sites: [annotations_snps]
             reference_assembly: [reference_assembly]
             target_sites: [target_sites]
         out:
@@ -122,7 +122,7 @@ steps:
         in:
             normalised_g_vcf: post_variant_processing/normalised_g_vcf
             vep_cache: [vep_cache]
-            reference_assembly_2: [reference_assembly_2]
+            reference_assembly_2: [reference_assembly]
 
         out:
             [annotated_vcf]        
@@ -139,7 +139,7 @@ steps:
             target_sites: [target_sites]
             library_sites: [library_sites]
             reference_assembly: [reference_assembly]
-            dedup_metrics: [dedup_metrics]
+            dedup_metrics: [post_alignment_processing/dedup_metrics]
 
         out:
-            [stage_report_pdf, read_coverage_summary]
+            [stage_report_pdf, library_coverage_txt, read_coverage_summary, insert_size_metrics_txt]

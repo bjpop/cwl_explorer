@@ -32,6 +32,10 @@ outputs:
         type: File
         outputSource: apply_recalibration/recalibrated_bam
         doc: 
+    dedup_metrics:
+        type: File
+        outputSource: mark_duplicates/dedup_metrics
+        doc: 
 
 requirements:
     - class: SubworkflowFeatureRequirement

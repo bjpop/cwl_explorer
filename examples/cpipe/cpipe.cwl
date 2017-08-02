@@ -95,8 +95,8 @@ steps:
         in:
             aligned_merged_bam: read_alignment/aligned_merged_bam
             target_sites: [target_sites]
-            annotations_snps: [annotations_snps]
-            annotations_indels: [annotations_indels]
+            known_snp_sites: [known_snp_sites]
+            known_indel_sites: [known_indel_sites]
             reference_assembly: [reference_assembly]
         out:
             [recalibrated_bam]
@@ -104,32 +104,32 @@ steps:
         run: variant_calling.cwl
         in:
             recalibrated_bam: post_alignment_processing/recalibrated_bam
-            annotations_snps: [annotations_snps]
-            annotations_indels: [annotations_indels]
-            annotations_indels_2: [annotations_indels_2]
+            known_snp_sites: [known_snp_sites]
             reference_assembly: [reference_assembly]
             target_sites: [target_sites]
         out:
-            [raw_variants_gvcf]
+            [raw_variants_g_gvcf]
     post_variant_processing:
         run: post_variant_processing.cwl
         in:
-            raw_variants_gvcf: variant_calling/raw_variants_gvcf
+            raw_variants_g_gvcf: variant_calling/raw_variants_g_gvcf
             reference_assembly: [reference_assembly]
             target_sites: [target_sites]
         out:
-             [normalized_vcf]       
+             [normalised_g_vcf]       
     variant_annotation:
         run: variant_annotation.cwl
         in:
-            normalized_vcf: post_variant_processing/normalized_vcf
+            normalised_g_vcf: post_variant_processing/normalised_g_vcf
             vep_cache: [vep_cache]
+            reference_assembly_2: [reference_assembly_2]
+
         out:
-            [annotated_2_vcf]        
+            [annotated_vcf]        
     post_annotation_processing:
         run: post_annotation_processing.cwl
         in:
-            annotated_2_vcf: variant_annotation/annotated_2_vcf
+            annotated_vcf: variant_annotation/annotated_vcf
         out:
             [transcript_filtered_table]
     generate_quality_reports:
@@ -138,5 +138,8 @@ steps:
             recalibrated_bam: post_alignment_processing/recalibrated_bam
             target_sites: [target_sites]
             library_sites: [library_sites]
+            reference_assembly: [reference_assembly]
+            dedup_metrics: [dedup_metrics]
+
         out:
-            [stage_report_pdf, library_coverage_txt, read_coverage_summary, insert_size_metrics_txt]
+            [stage_report_pdf, read_coverage_summary]

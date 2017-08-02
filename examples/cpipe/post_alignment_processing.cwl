@@ -12,12 +12,12 @@ inputs:
         type: File
         format: edam:format_3003  # bed
         doc: bed file containing coordinates for intersection of exons and library captures sites.
-    annotations_snps:
+    known_snp_sites:
         type: File
         format: data_1106 # dbSNP ID
         secondaryFiles: [.tbi]
         doc:
-    annotations_indels:
+    known_indel_sites:
         type: File
         secondaryFiles: [.tbi]
         doc:
@@ -49,7 +49,7 @@ steps:
         label: "picard-markDuplicates"
         doc: identify pcr duplicates and mark.
         in:
-            bam: genomic_coord_sort/sorted_bam
+            sorted_aligned_bam: genomic_coord_sort/sorted_bam
         out: 
             [deduped_bam, dedup_metrics]
     realign_intervals:
@@ -57,10 +57,10 @@ steps:
         label: "gatk-RealignerTargetCreator version 3.6"
         doc: identify sites in need of realignment using known indel sites as a guide. Sites with high mutation levels also targeted for inspection and potential realignment.
         in:
-            reference: [reference_assembly]
-            bam: mark_duplicates/deduped_bam
-            known_indel_sites: [annotations_indels]
-            bed: [target_sites]
+            reference_assembly: [reference_assembly]
+            deduped_bam: mark_duplicates/deduped_bam
+            known_indel_sites: [known_indel_sites]
+            target_sites: [target_sites]
         out:
             [realigned_intervals]
     perform_realignment:
@@ -68,20 +68,20 @@ steps:
         label: "gatk-IndelRealigner version 3.6"
         doc: perform realignment and generate new vcf with updated coords.
         in:
-            reference: [reference_assembly]
-            bam: mark_duplicates/deduped_bam
+            reference_assembly: [reference_assembly]
+            deduped_bam: mark_duplicates/deduped_bam
             interval_list: realign_intervals/realigned_intervals
         out:
-            [merged_dedup_realigned_bam]
+            [deduped_realigned_bam]
     base_quality_recalibration:
         run: bqsr.cwl
         label: "gatk-baseRecalibrator version 3.6"
         doc: recalibrate quality scores and export to a table. Recalibration performed by readgroup (representing sequencing lanes).
         in:
-            reference: [reference_assembly]
-            bam: perform_realignment/merged_dedup_realigned_bam
-            known_sites: [annotations_snps]
-            bed: [target_sites]
+            reference_assembly: [reference_assembly]
+            deduped_realigned_bam: perform_realignment/merged_dedup_realigned_bam
+            known_snp_sites: [known_snp_sites]
+            target_sites: [target_sites]
         out:
             [recalibrated_table]
     apply_recalibration:
@@ -89,9 +89,9 @@ steps:
         label: "gatk-printReads version 3.6"
         doc: overwrite quality scores with re-calibrated values.
         in:
-            reference: [reference_assembly]
-            bam: perform_realignment/merged_dedup_realigned_bam
-            bqsr_table: base_quality_recalibration/recalibrated_table
-            bed: [target_sites]
+            reference_assembly: [reference_assembly]
+            deduped_realigned_bam: perform_realignment/merged_dedup_realigned_bam
+            recalibrated_table: base_quality_recalibration/recalibrated_table
+            target_sites: [target_sites]
         out:
             [recalibrated_bam]

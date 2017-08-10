@@ -47,11 +47,11 @@ steps:
         label: "filter_lovd.py"
         doc: Expand VEP annotations across columns.
         in:
-            variant: filter_table/filtered_variant_table
+            filtered_variant_table: filter_table/filtered_variant_table
         out:
             [lovd_table]
     transcript_filter:
-        run: post_annotate_vep.cwl
+        run: transcript_filter.cwl
         label: "filter.py updated XX"
         doc: prioritise in cases where multiple transcripts for LOVD.
         in:

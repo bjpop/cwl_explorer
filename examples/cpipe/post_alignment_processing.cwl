@@ -32,6 +32,10 @@ outputs:
         type: File
         outputSource: apply_recalibration/recalibrated_bam
         doc: 
+    dedup_metrics:
+        type: File
+        outputSource: mark_duplicates/dedup_metrics
+        doc: 
 
 requirements:
     - class: SubworkflowFeatureRequirement
@@ -79,7 +83,7 @@ steps:
         doc: recalibrate quality scores and export to a table. Recalibration performed by readgroup (representing sequencing lanes).
         in:
             reference_assembly: [reference_assembly]
-            deduped_realigned_bam: perform_realignment/merged_dedup_realigned_bam
+            deduped_realigned_bam: perform_realignment/deduped_realigned_bam
             known_snp_sites: [known_snp_sites]
             target_sites: [target_sites]
         out:
@@ -90,7 +94,7 @@ steps:
         doc: overwrite quality scores with re-calibrated values.
         in:
             reference_assembly: [reference_assembly]
-            deduped_realigned_bam: perform_realignment/merged_dedup_realigned_bam
+            deduped_realigned_bam: perform_realignment/deduped_realigned_bam
             recalibrated_table: base_quality_recalibration/recalibrated_table
             target_sites: [target_sites]
         out:

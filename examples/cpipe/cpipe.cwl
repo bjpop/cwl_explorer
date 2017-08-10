@@ -14,15 +14,15 @@ inputs:
         type: File
         format: edam:format_1930  # fastq
         doc:
-    annotations_snps:
+    known_snp_sites:
         type: File
         format: data_1106 # dbSNP ID
         secondaryFiles: [.tbi]
         doc:
-    annotations_indels:
+    known_indel_sites:
         type: File
         doc:
-    annotations_indels_2:
+    annotations_indels_2: # XXX is this used anymore?
         type: File
         doc:
     reference_assembly:
@@ -31,6 +31,9 @@ inputs:
         format: data_2340 # genome build identifier
         secondaryFiles: [".fai", "^.dict"]
         doc:
+    reference_assembly_2:
+        type: File
+        doc: This is used by VEP.
     target_sites:
         type: File
         format: edam:format_3003  # bed
@@ -99,7 +102,7 @@ steps:
             known_indel_sites: [known_indel_sites]
             reference_assembly: [reference_assembly]
         out:
-            [recalibrated_bam]
+            [recalibrated_bam, dedup_metrics]
     variant_calling:
         run: variant_calling.cwl
         in:
@@ -116,20 +119,20 @@ steps:
             reference_assembly: [reference_assembly]
             target_sites: [target_sites]
         out:
-             [normalised_g_vcf]       
+             [normalized_g_vcf]       
     variant_annotation:
         run: variant_annotation.cwl
         in:
-            normalised_g_vcf: post_variant_processing/normalised_g_vcf
+            normalized_g_vcf: post_variant_processing/normalized_g_vcf
             vep_cache: [vep_cache]
             reference_assembly_2: [reference_assembly_2]
 
         out:
-            [annotated_vcf]        
+            [vep_annotated_vcf]        
     post_annotation_processing:
         run: post_annotation_processing.cwl
         in:
-            annotated_vcf: variant_annotation/annotated_vcf
+            annotated_vcf: variant_annotation/vep_annotated_vcf
         out:
             [transcript_filtered_table]
     generate_quality_reports:
@@ -139,7 +142,7 @@ steps:
             target_sites: [target_sites]
             library_sites: [library_sites]
             reference_assembly: [reference_assembly]
-            dedup_metrics: [dedup_metrics]
+            dedup_metrics: [post_alignment_processing/dedup_metrics]
 
         out:
-            [stage_report_pdf, read_coverage_summary]
+            [stage_report_pdf, read_coverage_summary, insert_size_metrics_txt, library_coverage_txt]

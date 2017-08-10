@@ -19,9 +19,9 @@ inputs:
         format:
         doc: 
 outputs:
-    normalised_g_vcf:
+    normalized_g_vcf:
         type: File
-        outputSource: vcf_normalize/normalised_g_vcf
+        outputSource: vcf_normalize/normalized_g_vcf
         doc: 
 
 requirements:
@@ -64,4 +64,4 @@ steps:
             reference_assembly: [reference_assembly]
             merged_variants_vcf: merge_variants/merged_variants_vcf
         out:
-            [normalised_g_vcf]
+            [normalized_g_vcf]

@@ -30,15 +30,15 @@ outputs:
         type: File
         outputSource: stage_report/stage_report_pdf
         doc: 
-    library_coverage_txt:
-        type: File
-        outputSource: calculate_capture_coverage/library_coverage_txt
-        doc: 
     read_coverage_summary:
         type: File
         outputSource: calculate_read_depth/read_coverage_summary
         doc: 
     insert_size_metrics_txt:
+        type: File
+        outputSource: insert_size_metrics/insert_size_metrics_txt
+        doc: 
+    library_coverage_txt:
         type: File
         outputSource: insert_size_metrics/insert_size_metrics_txt
         doc: 
@@ -71,7 +71,7 @@ steps:
             intersect_bed: create_target_exome_bed/intersect_bed
             recalibrated_bam: [recalibrated_bam]
         out:
-            [intersect_cov_gz exome_coverage_gz, ontarget_txt]
+            [intersect_cov_gz, exome_coverage_gz, ontarget_txt]
     calculate_qc_statistics:
         run: bam_quality.cwl
         label: "samtools version xx"
@@ -109,7 +109,7 @@ steps:
             gender: gender_check/karyotype_summary
             exome_coverage: calculate_coverage_stats/exome_coverage_gz
             ontarget_coverage: calculate_coverage_stats/ontarget_txt
-            intersect_cov_gz: calculate_capture_coverage/intersect_cov_gz
+            intersect_cov_gz: calculate_coverage_stats/intersect_cov_gz
             fragments_tsv: calculate_qc_statistics/fragments_tsv
         out:
             [stage_report_pdf, read_coverage_summary]

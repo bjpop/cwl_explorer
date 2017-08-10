@@ -4,7 +4,7 @@ label: "variant_annotation"
 doc:
 
 inputs:
-    normalised_g_vcf:
+    normalized_g_vcf:
         type: File
         format: edam:format_3016
         doc:
@@ -18,9 +18,9 @@ inputs:
         doc:
     
 outputs:
-    annotated_2_vcf:
+    vep_annotated_vcf:
         type: File
-        outputSource: vcf_annotate_2/annotated_2_vcf
+        outputSource: vcf_annotate_2/vep_annotated_vcf
         doc: 
 
 requirements:
@@ -32,7 +32,7 @@ steps:
         label: "vep version 85"
         doc: apply variant effect prediction tools and populate the vcf file.
         in:
-            normalised_g_vcf: normalised_g_vcf
+            input_vcf: normalized_g_vcf
             vep_cache: [vep_cache]
             reference_assembly_2: [reference_assembly_2]
         out:
@@ -42,6 +42,8 @@ steps:
         label: "dbNSFP, grantham, condel plugin"
         doc: additional variant effect prediction scores
         in:
-            annotated_vcf: vcf_annotate/vep_annotated_vcf
+            input_vcf: vcf_annotate/vep_annotated_vcf
+            vep_cache: [vep_cache]
+            reference_assembly_2: [reference_assembly_2]
         out:
-            [annotated_vcf]
+            [vep_annotated_vcf]

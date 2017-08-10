@@ -35,7 +35,7 @@ steps:
         in:
             forward_reads: [forward_reads]
             reverse_reads: [reverse_reads]
-            reference: [reference_assembly]
+            reference_assembly: [reference_assembly]
         out:
            [ref_aligned_bam]
     merge_alignments:

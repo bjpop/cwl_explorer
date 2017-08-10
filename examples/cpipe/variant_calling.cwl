@@ -22,9 +22,9 @@ inputs:
     recalibrated_bam:
         type: File
 outputs:
-    raw_variants_gvcf:
+    raw_variants_g_gvcf:
         type: File
-        outputSource: genotypeGVCFs/raw_variants_gvcf
+        outputSource: genotypeGVCFs/raw_variants_g_gvcf
         doc: 
 
 requirements:
@@ -38,7 +38,7 @@ steps:
         in:
             reference_assembly: [reference_assembly]
             recalibrated_bam: [recalibrated_bam]
-            known_snp_sites: [annotations_snps]
+            known_snp_sites: [known_snp_sites]
             target_sites: [target_sites]
         out:
             [raw_variants_vcf]
@@ -48,7 +48,7 @@ steps:
         doc: genotypeGVCF is a redundant stage for singleton pipeline. Stage is performed but functionality not relevant to downstream stages. Sample-by-sample calling employed for sample consistency and independence.
         in:
             reference_assembly: [reference_assembly]
-            known_snp_sites: [annotations_snps]
+            known_snp_sites: [known_snp_sites]
             raw_variants_g: call_variants/raw_variants_vcf
         out:
             [raw_variants_g_gvcf]

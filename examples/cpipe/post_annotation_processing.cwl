@@ -4,9 +4,9 @@ label: "post_annotation_processing"
 doc:
 
 inputs:
-    annotated_2_vcf:
+    annotated_vcf:
         type: File
-        format: edam:format_3016
+        format: edam:format_3016 # vcf
         doc:
 outputs:
     transcript_filtered_table:
@@ -23,38 +23,38 @@ steps:
         label: "vep-filter_vep.pl"
         doc: discard variants outside of non-coding regions. Filter based on consequence and biotype fields. Filtering performed to satisfy LOVD requirements.
         in:
-            variant: annotated_2_vcf
+            annotated_vcf: annotated_vcf
         out:
-            [vep_annotated_vcf]
+            [post_anno_vcf]
     vcf_to_table:
-        run: post_annotate_vep.cwl
+        run: vcf_to_table.cwl
         label: "vcf_to_table.py"
         doc: convert vcf to table to satisfy formatting requirements for LOVD import.
         in:
-            variant: post_annotate_vep/vep_annotated_vcf
+            post_anno_vcf: post_annotate_vep/post_anno_vcf
         out:
             [variant_table_tsv]
-    filter_table_forLOVD:
+    filter_table:
         run: filter_table.cwl
         label: "filter.py"
         doc: filter low quality variant (marked in vcf not removed).
         in:
-            table: vcf_to_table/variant_table_tsv
+            variant_table_tsv: vcf_to_table/variant_table_tsv
         out:
             [filtered_variant_table]
-    lovd_table:
-        run: post_annotate_vep.cwl
+    covert_table_lovd:
+        run: convert_table_lovd.cwl
         label: "filter_lovd.py"
         doc: Expand VEP annotations across columns.
         in:
-            variant: filter_table_forLOVD/filtered_variant_table
+            variant: filter_table/filtered_variant_table
         out:
-            [lovd_compatible_table]
+            [lovd_table]
     transcript_filter:
         run: post_annotate_vep.cwl
         label: "filter.py updated XX"
         doc: prioritise in cases where multiple transcripts for LOVD.
         in:
-            table: lovd_table/lovd_compatible_table
+            lovd_table: covert_table_lovd/lovd_table
         out:
             [transcript_filtered_table]

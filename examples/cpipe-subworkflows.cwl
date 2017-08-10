@@ -244,7 +244,7 @@ inputs:
     target_sites:
         type: File
         format: edam:format_3003  # bed
-        doc: bed file containing coordinates for intersection of exons and library captures sites.
+        doc: bed file containing the coordinates for genes/regions to be targeted.
     annotations_snps:
         type: File
         format: data_1106 # dbSNP ID
@@ -270,56 +270,52 @@ requirements:
     - class: SubworkflowFeatureRequirement
 
 steps:
-    genomic_coord_sort:
+    sort_bam:
         run: ../tools/genomic_coord_sort.cwl
         label: "samtools version 1.3"
-        label_metadata: https://bio.tools/tool/SAMtools/version/none
         in:
-            bam: [aligned_merged_bam]
+            bam_file: [aligned_merged_bam]
         out:
-            [sorted_bam]
+            [sorted_aligned_bam]
     mark_duplicates:
-        run: mark_duplicates.cwl
+        run: ../tools/mark_duplicates.cwl
         label: "picard-markDuplicates"
-        label_metadata:
-        doc: identify pcr duplicates and mark.
+        doc: identify and mark pcr duplicates.
         in:
-            bam: genomic_coord_sort/sorted_bam
+            sorted_aligned_bam: genomic_coord_sort/sorted_bam
         out: 
             [deduped_bam, dedup_metrics]
     realign_intervals:
         run: ../tools/realign_intervals.cwl
         label: "gatk-RealignerTargetCreator version 3.6"
-        label_metadata: https://bio.tools/tool/gatk2_realigner_target_c/version/none
         doc: identify sites in need of realignment using known indel sites as a guide. Sites with high mutation levels also targeted for inspection and potential realignment.
         in:
-            reference: [reference_assembly]
-            bam: mark_duplicates/deduped_bam
+            reference_assembly: [reference_assembly]
             known_indel_sites: [annotations_indels]
-            bed: [target_sites]
+            target_sites: [target_sites]
+            deduped_bam: mark_duplicates/deduped_bam
         out:
             [realigned_intervals]
     perform_realignment:
         run: ../tools/perform_realignment.cwl
         label: "gatk-IndelRealigner version 3.6"
-        label_metadata: https://bio.tools/tool/gatk2_indel_realigner-IP/version/none
         doc: perform realignment and generate new vcf with updated coords.
         in:
-            reference: [reference_assembly]
-            bam: mark_duplicates/deduped_bam
-            interval_list: realign_intervals/realigned_intervals
+            reference_assembly: [reference_assembly]
+            deduped_bam: mark_duplicates/deduped_bam
+            target_sites: [target_sites]
+            realigned_intervals: realign_intervals/realigned_intervals
         out:
-            [merged_dedup_realigned_bam]
+            [deduped_realigned_bam]
     base_quality_recalibration:
         run: bqsr.cwl
         label: "gatk-baseRecalibrator version 3.6"
-        label_metadata: https://bio.tools/tool/gatk2_base_recalibrator-/version/none
         doc: recalibrate quality scores and export to a table. Recalibration performed by readgroup (representing sequencing lanes).
         in:
-            reference: [reference_assembly]
-            bam: perform_realignment/merged_dedup_realigned_bam
-            known_sites: [annotations_snps]
-            bed: [target_sites]
+            reference_assembly: [reference_assembly]
+            deduped_realigned_bam: perform_realignment/merged_dedup_realigned_bam
+            known_snp_sites: [annotations_snps]
+            target_sites: [target_sites]
         out:
             [recalibrated_table]
     apply_recalibration:

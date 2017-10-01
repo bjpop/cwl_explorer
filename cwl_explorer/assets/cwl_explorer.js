@@ -207,9 +207,17 @@ function process_step_inputs(input_ids, step_inputs, target_node) {
     return elements;
 }
 
-// XXX should drop the # at the start
-function sub_workflow_url(run_identity) {
-    return run_identity;
+function workflow_metadata(node) {
+    const metadata = step_metadata(node);
+    var run_id = node.run;
+    if (run_id.length > 0 && run_id[0] == '#') {
+        // Drop the # from the start of the run id
+        // the # is added by cwltool --pack, but the # causes trouble
+        // with the URL query string, so we remove it
+        run_id = run_id.substring(1);
+        metadata.url = run_id;
+    }
+    return metadata;
 }
 
 function step_metadata(node) {
@@ -303,8 +311,7 @@ function process_steps(components, parent_id, input_ids, steps) {
                         render_id: render_id(step_object.id),
                         // Metadata for visualisation
                         cy_class: 'workflow',
-                        metadata: step_metadata(step_object),
-                        url: sub_workflow_url(step_object.run)
+                        metadata: workflow_metadata(step_object),
                     },
                     classes: "workflow",
                     group: "nodes",
@@ -507,7 +514,14 @@ function node_qtip_text(node) {
     // Construct an qtip string for each metadata field in the element
     for (var property in metadata) {
         if (metadata.hasOwnProperty(property)) {
-            const new_row = "<tr><td>" + property + "</td><td>" + metadata[property] + "</td></tr>";
+            // XXX hack to support URLs for sub workflows
+            // this should be replaced with a more robust solution
+            if (property === 'url') {
+                var new_row = "<tr><td>" + property + "</td><td>" + '<a href="?workflow=' + metadata[property] + '">' + metadata[property] + '</a>' + "</td></tr>";
+            }
+            else {
+                var new_row = "<tr><td>" + property + "</td><td>" + metadata[property] + "</td></tr>";
+            }
             rows.push(new_row);
         }
     }
@@ -515,15 +529,6 @@ function node_qtip_text(node) {
     return '<table class=\"cwl_explorer_qtip_table\">' + rows.join('') + "</table>";
 }
 
-function add_workflow_tap_handler(cy) {
-    cy.on('tap', 'node', function(event) {
-        var target = event.cyTarget;
-        cy.nodes().unselect();
-        target.select();
-        //panIn(target);
-        window.open(target.data('url'));
-    });
-}
 
 function add_qtips_to_nodes(cy) {
     cy.nodes().forEach(function(ele) {
@@ -625,7 +630,6 @@ function render_workflow() {
             add_qtips_to_nodes(cy);
             add_qtips_to_edges(cy);
             //add_expand_collapse(cy);
-            add_workflow_tap_handler(cy);
             cy.resize();
         }
     }

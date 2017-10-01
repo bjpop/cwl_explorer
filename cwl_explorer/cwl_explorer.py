@@ -124,11 +124,12 @@ def make_output_dir(options):
             output_dir_name = fields[0]
         else:
             exit_with_error("Cannot parse input CWL filepath", EXIT_CWL_PATH_ERROR)
-    if os.path.exists(output_dir_name):
-        exit_with_error("directory {} already exists, cannot create".format(output_dir_name), EXIT_FILE_IO_ERROR)
-    else:
+
+    # Create the output directory if it does not already exist
+    if not os.path.exists(output_dir_name):
         os.mkdir(output_dir_name)
-        return output_dir_name
+
+    return output_dir_name
 
 def make_asset_paths(asset_names):
     return [pkg_resources.resource_filename(PROGRAM_NAME, os.path.join(ASSETS_DIR_NAME, asset))

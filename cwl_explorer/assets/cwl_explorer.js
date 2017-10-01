@@ -207,6 +207,11 @@ function process_step_inputs(input_ids, step_inputs, target_node) {
     return elements;
 }
 
+// XXX should drop the # at the start
+function sub_workflow_url(run_identity) {
+    return run_identity;
+}
+
 function step_metadata(node) {
     const properties = ["run", "requirements", "hints", "label", "doc"];
     const result = {};
@@ -217,6 +222,18 @@ function step_metadata(node) {
         }
     }
     return result;
+}
+
+function is_workflow_step(components, step_object) {
+    const run_identity = step_object.run;
+    if (components.hasOwnProperty(run_identity)) {
+        const component = components[run_identity];
+        const component_class = component.class;
+        if (component_class === "Workflow") {
+            return true;
+        }
+    }
+    return false;
 }
 
 function process_step_run(components, step_object) {
@@ -277,21 +294,40 @@ function process_steps(components, parent_id, input_ids, steps) {
     const elements = [];
     for (var i = 0; i < steps.length; i++) {
         var step_object = steps[i];
-        const new_node = {
-                data: {
-                    parent: parent_id,
-                    id: step_object.id,
-                    render_id: render_id(step_object.id),
-                    // Metadata for visualisation
-                    cy_class: 'step',
-                    metadata: step_metadata(step_object),
-                },
-                classes: "step",
-                group: "nodes",
-            }
+
+        if (is_workflow_step(components, step_object)) {
+            var new_node = {
+                    data: {
+                        parent: parent_id,
+                        id: step_object.id,
+                        render_id: render_id(step_object.id),
+                        // Metadata for visualisation
+                        cy_class: 'workflow',
+                        metadata: step_metadata(step_object),
+                        url: sub_workflow_url(step_object.run)
+                    },
+                    classes: "workflow",
+                    group: "nodes",
+                }
+        }
+
+        else {
+            var new_node = {
+                    data: {
+                        parent: parent_id,
+                        id: step_object.id,
+                        render_id: render_id(step_object.id),
+                        // Metadata for visualisation
+                        cy_class: 'step',
+                        metadata: step_metadata(step_object),
+                    },
+                    classes: "step",
+                    group: "nodes",
+                }
+        }
         elements.push(new_node);
         elements.push.apply(elements, process_step_inputs(input_ids, step_object.in, step_object.id));
-        elements.push.apply(elements, process_step_run(components, step_object));
+        /* elements.push.apply(elements, process_step_run(components, step_object)); */
     }
     return elements;
 }
@@ -343,6 +379,7 @@ function load_cwl(cwl_contents_str) {
     return jsyaml.safeLoad(cwl_contents_str);
 }
 
+
 /* For display purposes, just show the last part of an identifier name.
 
    foo/bar/ram, will be rendered just as ram.
@@ -386,7 +423,7 @@ function cytoscape_settings (container, graph_elements) {
                 selector: ".output",
                 style: {
                     shape: 'roundrectangle',
-                    'background-color': '#99ccff',
+                    'background-color': '#f2d388',
                     label: 'data(render_id)',
                     'text-valign': 'center',
                     'text-halign' : 'center',
@@ -398,7 +435,19 @@ function cytoscape_settings (container, graph_elements) {
                 selector: ".input",
                 style: {
                     shape: 'roundrectangle',
-                    'background-color': '#cccc99',
+                    'background-color': '#cae4db',
+                    label: 'data(render_id)',
+                    'text-valign': 'center',
+                    'text-halign' : 'center',
+                    width : 'label',
+                    'padding': 10,
+                }
+            },
+            {
+                selector: ".workflow",
+                style: {
+                    shape: 'roundrectangle',
+                    'background-color': '#a9b7c0',
                     label: 'data(render_id)',
                     'text-valign': 'center',
                     'text-halign' : 'center',
@@ -410,7 +459,7 @@ function cytoscape_settings (container, graph_elements) {
                 selector: ".step",
                 style: {
                     shape: 'roundrectangle',
-                    'background-color': '#ccff66',
+                    'background-color': '#c98474',
                     label: 'data(render_id)',
                     'text-valign': 'center',
                     'text-halign' : 'center',
@@ -435,6 +484,7 @@ function cytoscape_settings (container, graph_elements) {
                     'text-valign': 'top',
                 }
             },
+            /*
             {
                 selector: "node.cy-expand-collapse-collapsed-node",
                 style: {
@@ -442,6 +492,7 @@ function cytoscape_settings (container, graph_elements) {
                     "shape": "rectangle"
                 }
             },
+            */
         ],
         container: container,
         elements: graph_elements,
@@ -464,12 +515,22 @@ function node_qtip_text(node) {
     return '<table class=\"cwl_explorer_qtip_table\">' + rows.join('') + "</table>";
 }
 
+function add_workflow_tap_handler(cy) {
+    cy.on('tap', 'node', function(event) {
+        var target = event.cyTarget;
+        cy.nodes().unselect();
+        target.select();
+        //panIn(target);
+        window.open(target.data('url'));
+    });
+}
+
 function add_qtips_to_nodes(cy) {
     cy.nodes().forEach(function(ele) {
         ele.qtip({
              content: {
                  text: node_qtip_text(ele),
-                 title: 'workflow ' + ele.data('cy_class')
+                 title: ele.data('cy_class')
              },
              style: {
                  classes: 'qtip-bootstrap'
@@ -516,6 +577,7 @@ function add_qtips_to_edges(cy) {
     });
 }
 
+/*
 function add_expand_collapse(cy) {
     var api = cy.expandCollapse({
         layoutBy: {
@@ -531,17 +593,42 @@ function add_expand_collapse(cy) {
    });
    api.collapseAll();
 }
+*/
 
 function render_workflow() {
+    var urlParams = new URLSearchParams(window.location.search);
+    //var entries = urlParams.entries();
+    //for (var pair of entries) { 
+    //      console.log(pair[0], pair[1]); 
+    //}
+
     const components = get_components();
-    const main_workflow = components['#main'];
-    const graph_elements = workflow_to_graph(components, null, main_workflow);
-    const container = document.getElementById('cy');
-    const cy = cytoscape(cytoscape_settings(container, graph_elements));
-    add_qtips_to_nodes(cy);
-    add_qtips_to_edges(cy);
-    add_expand_collapse(cy);
-    cy.resize();
+
+    console.log(components);
+
+    // This is the default top-level workflow ID
+    var workflow_id = '#main';
+
+    // Check if the URL has a parameter specifying which workflow to view
+    if (urlParams.has('workflow')) {
+        var workflow_id = '#' + urlParams.get('workflow');
+    }
+
+    if (workflow_id in components) {
+        // Lookup this workflow in list of CWL components 
+        const this_workflow = components[workflow_id];
+        // Make sure we are working with a Workflow object and not something else
+        if ("class" in this_workflow && this_workflow["class"] === "Workflow") {
+            const graph_elements = workflow_to_graph(components, null, this_workflow);
+            const container = document.getElementById('cy');
+            const cy = cytoscape(cytoscape_settings(container, graph_elements));
+            add_qtips_to_nodes(cy);
+            add_qtips_to_edges(cy);
+            //add_expand_collapse(cy);
+            add_workflow_tap_handler(cy);
+            cy.resize();
+        }
+    }
 }
 
 /* Produce a map of all the components of a workflow.

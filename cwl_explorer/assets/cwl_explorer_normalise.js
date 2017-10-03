@@ -132,11 +132,14 @@ function normalise_inputs(workflow) {
     return result;
 }
 
-/*  Currently the identity function, but we leave the placeholder here
-    in case we want to perform more normalisation in the future
+/*  
+ * Convert the outputSource field into an array, if it is not already an array.
 */
 
 function normalise_workflow_output_parameter(output_parameter) {
+    if (! Array.isArray(output_parameter.outputSource)) {
+        output_parameter.outputSource = [output_parameter.outputSource];
+    }
     return output_parameter;
 }
 

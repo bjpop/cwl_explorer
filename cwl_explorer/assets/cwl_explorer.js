@@ -109,7 +109,7 @@ function output_metadata(node) {
 
     format:	        string | Expression	False
 
-    outputSource:	string | array<string>
+    outputSource:	array<string>
 
     linkMerge:      LinkMergeMethod
 
@@ -137,21 +137,25 @@ function process_outputs(parent_id, input_ids, outputs) {
                 group: 'nodes',
             }
         elements.push(new_node);
-        const new_edge = {
-                data: {
-                    parent: parent_id, // Not sure if this is needed for edges
-                    source: get_source(input_ids, output_object.outputSource),
-                    target: output_object.id,
-                    cy_class: 'edge',
-                    // Metadata for visualisation
-                    metadata: {
-                        source: output_object.outputSource,
-			target: output_object.id
+	// Add an edge to every outputSource (there could be 1 or more)
+	for (var j = 0; j < output_object.outputSource.length; j++) {
+            const outputSourceName = output_object.outputSource[j];	
+            const new_edge = {
+                    data: {
+                        parent: parent_id, // Not sure if this is needed for edges
+                        source: get_source(input_ids, outputSourceName),
+                        target: output_object.id,
+                        cy_class: 'edge',
+                        // Metadata for visualisation
+                        metadata: {
+                            source: output_object.outputSource,
+    			target: output_object.id
+                        },
                     },
-                },
-                group: "edges"
-            };
-        elements.push(new_edge);
+                    group: "edges"
+                };
+            elements.push(new_edge);
+	}
     }
     return elements;
 }
@@ -608,8 +612,6 @@ function render_workflow() {
     //}
 
     const components = get_components();
-
-    console.log(components);
 
     // This is the default top-level workflow ID
     var workflow_id = '#main';

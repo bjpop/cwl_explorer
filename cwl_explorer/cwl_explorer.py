@@ -96,11 +96,17 @@ def init_logging(log_filename):
         logging.info('command line: {0}'.format(' '.join(sys.argv)))
 
 
+
 def pack_cwl(output_dir, cwl_filepath):
     output_packed_file_path = os.path.join(output_dir, "workflow.js")
     command = "cwltool --pack {cwl_file}".format(cwl_file=cwl_filepath)
     process = subprocess.Popen(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
     stdout, stderr = process.communicate() 
+    # Assume that the stdout and stderr streams are UTF8 compatible
+    if stdout is not None and sys.version_info[0] > 2:
+        stdout = stdout.decode('utf8')
+    if stderr is not None and sys.version_info[0] > 2:
+        stderr = stderr.decode('utf8')
     if stderr is not None and len(stderr) > 0:
         logging.info("cwltool stderr: {}".format(stderr.strip()))
     if process.returncode != 0:

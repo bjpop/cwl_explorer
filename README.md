@@ -4,6 +4,8 @@ cwl-explorer is a web-based visualisation tool for [Common Workflow Language (CW
 
 A command line program, called `cwl_explorer`, reads in a CWL desscription and generates a web-based visualisation as output.
 
+cwl-explorer calls upon another program called [cwltool](https://github.com/common-workflow-language/cwltool) to validate the input CWL file, and to pack multi-file workflows into a single file.
+
 # License
 
 cwl-explorer is released as open source software under the terms of MIT License.
@@ -74,10 +76,7 @@ optional arguments:
 
 ## Logging
 
-If the ``--log FILE`` command line argument is specified, cwl-explorer will output a log file containing information about program progress. The log file includes the command line used to execute the program, and 
-
-```
-```
+If the ``--log FILE`` command line argument is specified, cwl-explorer will output a log file containing information about program progress. The log file includes the command line used to execute the program, and some information about progress. Output messages from cwltool are written to the log file as well, which can be useful for debugging input CWL validation errors.
 
 # Exit status values
 
@@ -86,7 +85,8 @@ Biotool returns the following exit status values:
 * 0: The program completed successfully.
 * 1: File I/O error. 
 * 2: A command line error occurred. 
-
+* 3: An error occurred when trying to pack multi-file CWL files into one file, using cwltool. Possibly a CWL validation error. 
+* 4: Could not properly parse the filepath for the input CWL file (perhaps the filepath is invalid).
 
 # Authors
 

@@ -1,67 +1,61 @@
-<!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<title>CWL explorer</title>
+<title>Workflow Explorer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"
+          integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+    <link rel="stylesheet" href="cwl_explorer.css">
+</head>
+
+<body>
+  <div class="container-fluid">
+
+  <div class="page-header"><h1 class="display-4">Workflow Explorer</h1></div>
+
+    <div class="row">
+
+      <div class="col-4">
+        <div class="card">
+          <div class="card-header">Details</div>
+
+          <div class="card-body">
+            <table class="table table-responsive" id="element-metadata">
+              <tbody> 
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+      
+      <div class="col-8">
+        <div class="card">
+          <div class="card-header">Workflow</div>
+
+          <div class="card-body">
+            <div id="cy"></div>
+          </div>
 
 
+        </div>
+      </div>
+    
+    </div>
+  </div>
+</div>
 
-<link rel="stylesheet" href="cwl_explorer.css">
-<link rel="stylesheet" href="bootstrap.min.css">
-<link rel="stylesheet" href="jquery.qtip.min.css" />
-<script src="cytoscape.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/2.5.4/cytoscape.min.js"></script>
+<script src="https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min.js"></script>
+<script src="https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.1.2/cytoscape-dagre.js"></script>
 <script src="js-yaml.min.js"></script>
-<script src="jquery.min.js"></script>
-<script src="jquery.qtip.min.js"></script>
-<script src="dagre.min.js"></script>
-<script src="cytoscape-dagre.js"></script>
-<!-- <script src="cytoscape-expand-collapse.js"></script> -->
-<script src="cytoscape-qtip.js"></script>
 <script src="cwl_explorer_normalise.js"></script>
 <script src="cwl_explorer_utils.js"></script>
 <script src="cwl_explorer.js"></script>
 <script src="workflow.js"></script>
 
-</head>
-
-<body>
-
-<div class="container-fluid">
-
-    <div class="page-header">
-        <h1>CWL Explorer</h1>
-    </div>
-
-<!--
-    <div class="row">
-        <div class="col-md-3">
-            <form role="form">
-                <div class="form-group">
-                    <label for="example_choice">Example CWL workflow</label>
-                    <select id="example_choice" class="form-control cwl-explorer-setting">
-                        <option value="example_1">example 1</option>
-                        <option value="example_2">example 2</option>
-                        <option value="example_3">example 3</option>
-                    </select>
-                 </div>
-            </form>
-        </div>
-        <div class="col-md-3">
-            <form role="form">
-                <label for="workflow_url">CWL workflow URL</label>
-                <div class="input-group">
-                    <input id="workflow_url" type="text" class="form-control" placeholder="CWL workflow URL" aria-describedby="workflow_url">
-                    <span class="input-group-btn"><button id="workflow_url_button" type="button" class="btn btn-default">Draw</button></span>
-                </div>
-            </form>
-        </div>
-    </div>
--->
-
-    <div id="cy"></div>
-
-
-</div> <!-- container -->
-
 </body>
 </html>
+~                      

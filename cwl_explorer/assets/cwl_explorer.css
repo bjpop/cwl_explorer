@@ -2,13 +2,13 @@
   fill: #eee;
 }
 
-line {
+.line {
   stroke: #fff;
   stroke-opacity: 0.5;
   shape-rendering: crispEdges;
 }
 
-textarea {
+.textarea {
   padding: 2px;
   width: 714px;
   height: 360px;
@@ -28,6 +28,7 @@ textarea {
 
 .tab-content { margin-top: 10px; }
 
+/*
 #cy {
   position: absolute;
   top: 200px;
@@ -35,9 +36,9 @@ textarea {
   left: 10px;
   right: 10px;
 }
-
-table.cwl_explorer_qtip_table {
-    border-collapse: separate;
-    border-spacing: 10px;
-    text-align: left;
+*/
+#cy {
+  height: 100%;
+  border: solid;
+  border-width: 1;
 }

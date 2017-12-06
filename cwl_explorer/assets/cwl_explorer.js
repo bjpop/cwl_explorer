@@ -338,7 +338,6 @@ function process_steps(components, parent_id, input_ids, steps) {
         }
         elements.push(new_node);
         elements.push.apply(elements, process_step_inputs(input_ids, step_object.in, step_object.id));
-        /* elements.push.apply(elements, process_step_run(components, step_object)); */
     }
     return elements;
 }
@@ -495,27 +494,17 @@ function cytoscape_settings (container, graph_elements) {
                     'text-valign': 'top',
                 }
             },
-            /*
-            {
-                selector: "node.cy-expand-collapse-collapsed-node",
-                style: {
-                    "background-color": '#ccff66',
-                    "shape": "rectangle"
-                }
-            },
-            */
         ],
         container: container,
         elements: graph_elements,
     };
 }
 
-function node_qtip_text(node) {
+function node_metadata(node) {
     const rows = [];
     const identity = "<tr><td>identity</td><td>" + node.data('id') + "</td></tr>";
     const metadata = node.data('metadata');
     rows.push(identity);
-    // Construct an qtip string for each metadata field in the element
     for (var property in metadata) {
         if (metadata.hasOwnProperty(property)) {
             // XXX hack to support URLs for sub workflows
@@ -529,87 +518,40 @@ function node_qtip_text(node) {
             rows.push(new_row);
         }
     }
-    // XXX fix styling of the qtip table
-    return '<table class=\"cwl_explorer_qtip_table\">' + rows.join('') + "</table>";
+    return rows.join('');
 }
 
 
-function add_qtips_to_nodes(cy) {
-    cy.nodes().forEach(function(ele) {
-        ele.qtip({
-             content: {
-                 text: node_qtip_text(ele),
-                 title: ele.data('cy_class')
-             },
-             style: {
-                 classes: 'qtip-bootstrap'
-             },
-             position: {
-                 my: 'bottom center',
-                 at: 'top center',
-                 target: ele
-             }
-        });
-    });
-}
-
-function edge_qtip_text(node) {
+function edge_metadata(node) {
     const rows = [];
     const metadata = node.data('metadata');
-    // Construct an qtip string for each metadata field in the element
     for (var property in metadata) {
         if (metadata.hasOwnProperty(property)) {
             const new_row = "<tr><td>" + property + "</td><td>" + metadata[property] + "</td></tr>";
             rows.push(new_row);
         }
     }
-    // XXX fix styling of the qtip table
-    return '<table class=\"cwl_explorer_qtip_table\">' + rows.join('') + "</table>";
+    return rows.join('');
 }
 
-function add_qtips_to_edges(cy) {
-    cy.edges().forEach(function(ele) {
-        ele.qtip({
-             content: {
-                 text: edge_qtip_text(ele),
-                 title: 'workflow edge'
-             },
-             style: {
-                 classes: 'qtip-bootstrap'
-             },
-             position: {
-                 my: 'bottom center',
-                 at: 'top center',
-                 target: ele
-             }
-        });
+// Add an event handler to edges in the graph specifying what to do when the edge is tapped
+// by the user
+function edge_on_tap_handler(cy) {
+   cy.on('tap', 'edge', function (evt) {
+      $('#element-metadata tbody').html(edge_metadata(evt.cyTarget));
     });
 }
 
-/*
-function add_expand_collapse(cy) {
-    var api = cy.expandCollapse({
-        layoutBy: {
-            name: "dagre",
-            //animate: true,
-            //randomize: false, 
-            fit: true,
-            rankDir: 'TB'
-        },
-        //fisheye: false,
-        animate: false,
-        undoable: false
-   });
-   api.collapseAll();
+// Add an event handler to nodes in the graph specifying what to do when the node is tapped
+// by the user
+function node_on_tap_handler(cy) {
+   cy.on('tap', 'node', function (evt) {
+      $('#element-metadata tbody').html(node_metadata(evt.cyTarget));
+    });
 }
-*/
 
 function render_workflow() {
     var urlParams = new URLSearchParams(window.location.search);
-    //var entries = urlParams.entries();
-    //for (var pair of entries) { 
-    //      console.log(pair[0], pair[1]); 
-    //}
 
     const components = get_components();
 
@@ -629,10 +571,11 @@ function render_workflow() {
             const graph_elements = workflow_to_graph(components, null, this_workflow);
             const container = document.getElementById('cy');
             const cy = cytoscape(cytoscape_settings(container, graph_elements));
-            add_qtips_to_nodes(cy);
-            add_qtips_to_edges(cy);
-            //add_expand_collapse(cy);
+            node_on_tap_handler(cy);
+            edge_on_tap_handler(cy);
             cy.resize();
+  
+
         }
     }
 }

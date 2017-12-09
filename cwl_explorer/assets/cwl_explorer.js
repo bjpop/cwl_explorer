@@ -62,7 +62,6 @@ function process_inputs(parent_id, inputs) {
             },
             classes: 'input',
             group: 'nodes',
-           
         };
     });
 }
@@ -149,7 +148,7 @@ function process_outputs(parent_id, input_ids, outputs) {
                         // Metadata for visualisation
                         metadata: {
                             source: output_object.outputSource,
-    			target: output_object.id
+    			    target: output_object.id
                         },
                     },
                     group: "edges"
@@ -200,7 +199,8 @@ function process_step_inputs(input_ids, step_inputs, target_node) {
                         cy_class: 'edge',
                         metadata: {
                             source: sources[j],
-			    target: target_node + '/' + step_input_object.id,
+			    //target: target_node + '/' + step_input_object.id,
+			    target: step_input_object.id,
                         },
                     },
                     group: "edges"
@@ -211,7 +211,7 @@ function process_step_inputs(input_ids, step_inputs, target_node) {
     return elements;
 }
 
-function workflow_metadata(node) {
+function subworkflow_metadata(node) {
     const metadata = step_metadata(node);
     var run_id = node.run;
     if (run_id.length > 0 && run_id[0] == '#') {
@@ -224,6 +224,7 @@ function workflow_metadata(node) {
     return metadata;
 }
 
+// XXX lookup the corresponding run object and get its metadata.
 function step_metadata(node) {
     const properties = ["run", "requirements", "hints", "label", "doc"];
     const result = {};
@@ -300,6 +301,8 @@ function process_step_run(components, step_object) {
     TODO:
         - Do something with the outputs
         - Add metadata to the node, where available
+        - XXX find the run command and display information about that, if the
+          run command is a command line tool.
 */
 
 function process_steps(components, parent_id, input_ids, steps) {
@@ -314,8 +317,8 @@ function process_steps(components, parent_id, input_ids, steps) {
                         id: step_object.id,
                         render_id: render_id(step_object.id),
                         // Metadata for visualisation
-                        cy_class: 'workflow',
-                        metadata: workflow_metadata(step_object),
+                        cy_class: 'subworkflow',
+                        metadata: subworkflow_metadata(step_object),
                     },
                     classes: "workflow",
                     group: "nodes",
@@ -521,6 +524,19 @@ function node_metadata(node) {
     return rows.join('');
 }
 
+function workflow_metadata(workflow) {
+    const rows = [];
+    var properties = ["doc", "label", "id"];
+    for (var i = 0; i < properties.length; i++) {  
+        var this_property = properties[i];
+        if (this_property in workflow) {
+            var new_row = "<tr><td>" + this_property + "</td><td>" + workflow[this_property] + "</td></tr>";
+            rows.push(new_row);
+        }
+    }
+    return rows.join('');
+}
+
 
 function edge_metadata(node) {
     const rows = [];
@@ -538,7 +554,11 @@ function edge_metadata(node) {
 // by the user
 function edge_on_tap_handler(cy) {
    cy.on('tap', 'edge', function (evt) {
-      $('#element-metadata tbody').html(edge_metadata(evt.cyTarget));
+      var this_component = evt.cyTarget;
+      // Show the type (cy_class) of node 
+      $('#element-metadata-type').text(this_component.data('cy_class'));
+      // Show the metadata for this node 
+      $('#element-metadata tbody').html(edge_metadata(this_component));
     });
 }
 
@@ -546,8 +566,16 @@ function edge_on_tap_handler(cy) {
 // by the user
 function node_on_tap_handler(cy) {
    cy.on('tap', 'node', function (evt) {
-      $('#element-metadata tbody').html(node_metadata(evt.cyTarget));
+      var this_component = evt.cyTarget;
+      // Show the type (cy_class) of node 
+      $('#element-metadata-type').text(this_component.data('cy_class'));
+      // Show the metadata for this node 
+      $('#element-metadata tbody').html(node_metadata(this_component));
     });
+}
+
+function display_workflow_metadata(workflow) {
+   $('#workflow-metadata tbody').html(workflow_metadata(workflow));
 }
 
 function render_workflow() {
@@ -566,6 +594,7 @@ function render_workflow() {
     if (workflow_id in components) {
         // Lookup this workflow in list of CWL components 
         const this_workflow = components[workflow_id];
+        display_workflow_metadata(this_workflow);
         // Make sure we are working with a Workflow object and not something else
         if ("class" in this_workflow && this_workflow["class"] === "Workflow") {
             const graph_elements = workflow_to_graph(components, null, this_workflow);
@@ -574,8 +603,6 @@ function render_workflow() {
             node_on_tap_handler(cy);
             edge_on_tap_handler(cy);
             cy.resize();
-  
-
         }
     }
 }

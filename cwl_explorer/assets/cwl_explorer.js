@@ -282,7 +282,8 @@ function process_steps(components, parent_id, input_ids, steps) {
                         render_id: render_id(step_object.id),
                         metadata: {
                             element_type: 'step',
-                            cwl_element: step_object
+                            cwl_element: step_object,
+                            commandline_cwl_element: components[step_object.run]
                         }
                     },
                     classes: "step",
@@ -471,6 +472,9 @@ function element_properties(element_type) {
         case "step":
             return ["id", "label", "run", "doc"] 
             break;
+        case "commandline":
+            return ["id", "label", "baseCommand", "doc"] 
+            break;
         default:
             return [] 
             break;
@@ -520,6 +524,11 @@ function metadata_table(cwl_element, element_type) {
     return rows.join('');
 }
 
+function display_step_metadata(cwl_element, commandline_cwl_element) {
+    $('#element-metadata tbody').html(metadata_table(cwl_element, "step"));
+    $('#commandline-metadata-table tbody').html(metadata_table(commandline_cwl_element, "commandline"));
+    $('#commandline-metadata').show();
+}
 
 // Add an event handler to nodes in the graph specifying what to do when the node is tapped
 // by the user
@@ -527,10 +536,16 @@ function node_on_tap_handler(cy) {
    cy.on('tap', 'node', function (evt) {
       var this_component = evt.cyTarget;
       var metadata = this_component.data('metadata');
-      // Show the type (cy_class) of node 
+      // Show the element type of node 
       $('#element-metadata-type').text(metadata.element_type);
       // Show the metadata for this node 
-      $('#element-metadata tbody').html(metadata_table(metadata.cwl_element, metadata.element_type));
+      if (metadata.element_type === "step") {
+          display_step_metadata(metadata.cwl_element, metadata.commandline_cwl_element);
+      }
+      else {
+          $('#element-metadata tbody').html(metadata_table(metadata.cwl_element, metadata.element_type));
+          $('#commandline-metadata').hide();
+      }
     });
 }
 

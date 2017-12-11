@@ -142,7 +142,7 @@ def make_asset_paths(asset_names):
                for asset in asset_names]
 
 def copy_web_assets(output_directory):
-    asset_names = ['index.html', 'cwl_explorer.css', 'cwl_explorer_utils.js',
+    asset_names = ['index.html', 'EDAM.js', 'cwl_explorer.css', 'cwl_explorer_utils.js',
         'cwl_explorer.js', 'cwl_explorer_normalise.js', 'js-yaml.min.js']
     for filename in make_asset_paths(asset_names):
         shutil.copy(filename, output_directory)

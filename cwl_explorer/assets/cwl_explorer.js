@@ -501,7 +501,11 @@ function custom_value(element_type, property, value) {
     }
     else if (property === "format" && value.startsWith("edam:")) {
         const edam_format_id = value.substring("edam:".length);
-        return '<a href="http://edamontology.org/' + edam_format_id + '">' + value + '</a>';
+        var label = edam_format_id;
+        if (edam_format_id in edam_ontology) {
+	    label = edam_ontology[edam_format_id].label;
+        }
+        return '<a href="http://edamontology.org/' + edam_format_id + '">' + label + '</a>';
     }
     else {
         return value;

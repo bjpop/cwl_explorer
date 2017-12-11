@@ -82,17 +82,15 @@ def init_logging(log_filename):
         logging.info('command line: {0}'.format(' '.join(sys.argv)))
 
 def edam_to_json(filepath):
-    result = []
+    result = {} 
     with open(filepath) as file:
         reader = csv.DictReader(file)
         for row in reader:
-            this_entry = {}
             class_id = row['Class ID']
             label = row['Preferred Label']
             definitions = row['Definitions']
             prefixIRI = row['http://data.bioontology.org/metadata/prefixIRI']
-            this_entry[prefixIRI] = {'class_id': class_id, 'label': label, 'definitions': definitions}
-            result.append(this_entry)
+            result[prefixIRI] = {'class_id': class_id, 'label': label, 'definitions': definitions}
     print(json.dumps(result))
 
 def main():
